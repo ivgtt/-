@@ -13,7 +13,6 @@
             box-sizing: border-box;
         }
 
-        /* 默认亮色模式变量 (将通过JS动态更新) */
         :root {
             --bg-start: #f0f4fa;
             --bg-end: #d9e2ef;
@@ -37,7 +36,6 @@
             --hitokoto-bg: var(--surface-solid);
         }
 
-        /* 暗色模式变量 (亮色模式的互补) */
         body.dark {
             --bg-start: #1a262f;
             --bg-end: #0f1a24;
@@ -78,7 +76,6 @@
             position: relative;
         }
 
-        /* 头部 */
         .header-card {
             background: var(--header-bg);
             color: var(--header-text);
@@ -91,7 +88,7 @@
             justify-content: space-between;
             position: relative;
             z-index: 10;
-            transition: background 0.3s, color 0.2s, box-shadow 0.2s;
+            transition: background 0.3s;
         }
 
         .header-left {
@@ -112,7 +109,6 @@
             font-weight: 700;
         }
 
-        /* 侧边栏遮罩 */
         .sidebar-overlay {
             position: fixed;
             top: 0;
@@ -128,7 +124,6 @@
         }
         .sidebar-overlay.show { visibility: visible; opacity: 1; }
 
-        /* 侧边栏 */
         .sidebar {
             position: fixed;
             top: 0;
@@ -139,7 +134,7 @@
             box-shadow: 2px 0 20px rgba(0,0,0,0.3);
             z-index: 1000;
             transform: translateX(-100%);
-            transition: transform 0.3s ease, background 0.3s, color 0.2s;
+            transition: transform 0.3s ease, background 0.3s;
             display: flex;
             flex-direction: column;
             padding: 2rem 1.2rem;
@@ -213,11 +208,9 @@
             color: var(--text-tertiary);
         }
 
-        /* 视图切换 */
         .view { display: none; }
         .view.active { display: block; }
 
-        /* 公告栏 */
         .announcement-bar {
             background: var(--accent-soft);
             border-radius: 3rem;
@@ -231,7 +224,6 @@
             backdrop-filter: blur(10px);
         }
 
-        /* 一言卡片 */
         .hitokoto-card {
             background: var(--hitokoto-bg);
             border-radius: 3rem;
@@ -253,7 +245,6 @@
             margin-right: auto;
         }
 
-        /* 分类标签 */
         .categories {
             display: flex;
             flex-wrap: wrap;
@@ -271,11 +262,10 @@
             font-weight: 500;
             cursor: pointer;
             border: 1px solid transparent;
-            transition: background 0.2s, color 0.2s;
+            transition: background 0.2s;
         }
         .cat.active { background: var(--accent); color: white; }
 
-        /* 发布卡片 */
         .post-card {
             background: var(--surface);
             backdrop-filter: blur(10px);
@@ -286,7 +276,7 @@
             box-shadow: var(--card-shadow);
             position: relative;
             z-index: 4;
-            transition: background 0.3s, border-color 0.2s;
+            transition: background 0.3s;
         }
         .input-row {
             display: flex;
@@ -303,7 +293,7 @@
             color: var(--text-primary);
             outline: none;
             flex: 1 1 auto;
-            transition: background 0.3s, border-color 0.2s, color 0.2s;
+            transition: background 0.3s;
         }
         .input-row textarea { border-radius: 1.8rem; min-height: 80px; resize: vertical; }
         .publish-actions { display: flex; justify-content: flex-end; gap: 1rem; align-items: center; }
@@ -317,11 +307,10 @@
             font-size: 0.9rem;
             cursor: pointer;
             box-shadow: 0 6px 0 #1a3349;
-            transition: transform 0.1s, box-shadow 0.1s, background 0.2s;
+            transition: transform 0.1s, box-shadow 0.1s;
         }
         .btn-primary:active { transform: translateY(4px); box-shadow: 0 2px 0 #1a3349; }
 
-        /* iOS动态堆叠卡片列表 */
         .feed {
             display: flex;
             flex-direction: column;
@@ -467,7 +456,6 @@
             padding: 0.5rem 1rem;
         }
 
-        /* 个人主页卡片 */
         .identity-card, .profile-card, .lookup-card {
             background: var(--surface);
             backdrop-filter: blur(10px);
@@ -476,10 +464,9 @@
             margin-bottom: 2rem;
             border: 1px solid var(--border-light);
             box-shadow: var(--card-shadow);
-            transition: background 0.3s, border-color 0.2s;
+            transition: background 0.3s;
         }
 
-        /* 弹窗 */
         .dialog {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -520,11 +507,10 @@
             background: var(--accent);
             color: white;
         }
-        #cancelAnnounce, #cancelDelete { background: var(--text-tertiary); }
+        #cancelDelete { background: var(--text-tertiary); }
         .loading { text-align: center; padding: 2rem; color: var(--text-tertiary); }
     </style>
-    <!-- 外部库：FingerprintJS 和 UA Parser (国内CDN) -->
-    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+    <!-- UA Parser (国内CDN) -->
     <script src="https://cdn.jsdelivr.net/npm/ua-parser-js@1.0.35/dist/ua-parser.min.js"></script>
     <!-- Font Awesome 6 (BootCDN) -->
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -542,7 +528,7 @@
         <!-- 侧边栏遮罩 -->
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-        <!-- 侧边栏 -->
+        <!-- 侧边栏 (已删除公告管理入口) -->
         <div class="sidebar" id="sidebar">
             <i class="fas fa-times sidebar-close" id="closeSidebar"></i>
             <div class="sidebar-header">
@@ -556,7 +542,6 @@
                 <div class="sidebar-item" id="sidebarProfileBtn"><i class="fas fa-home"></i><span>我的主页</span></div>
                 <div class="sidebar-item" id="sidebarThemeToggle"><i class="fas fa-moon" id="sidebarThemeIcon"></i><span>暗色模式</span></div>
                 <div class="sidebar-item" id="sidebarMagicBtn"><i class="fas fa-magic"></i><span>神奇换色</span></div>
-                <div class="sidebar-item" id="sidebarAnnounceBtn"><i class="fas fa-bullhorn"></i><span>公告管理</span></div>
             </div>
             <div class="fun-section">
                 <div class="fun-title"><i class="fas fa-grin-squint"></i> 校园趣味角</div>
@@ -565,7 +550,7 @@
             </div>
         </div>
 
-        <!-- 公告栏 -->
+        <!-- 公告栏 (仍可显示，但无管理入口) -->
         <div id="announcementBar" class="announcement-bar" style="display: none;">
             <i class="fas fa-bullhorn"></i>
             <span class="announcement-text" id="announcementText"></span>
@@ -633,7 +618,7 @@
             <div id="profileContent"></div>
         </div>
 
-        <!-- 删除确认弹窗 -->
+        <!-- 删除确认弹窗 (仅保留删除) -->
         <div class="dialog" id="deleteDialog">
             <div class="dialog-box">
                 <p><i class="fas fa-trash-alt" style="color:var(--delete-btn);"></i> 输入管理密码以删除</p>
@@ -641,19 +626,6 @@
                 <div class="dialog-actions">
                     <button id="cancelDelete">取消</button>
                     <button id="confirmDelete">确认删除</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- 公告管理弹窗 -->
-        <div class="dialog" id="announceDialog">
-            <div class="dialog-box">
-                <p><i class="fas fa-bullhorn" style="color:var(--accent);"></i> 管理公告</p>
-                <input type="password" id="announcePass" placeholder="管理密码">
-                <textarea id="announceContent" placeholder="公告内容" rows="3"></textarea>
-                <div class="dialog-actions">
-                    <button id="cancelAnnounce">取消</button>
-                    <button id="saveAnnounce">保存公告</button>
                 </div>
             </div>
         </div>
@@ -665,14 +637,38 @@
             const JSONBIN_KEY = '$2a$10$9z248RcrjjqcUz1byk73Ie5SZ/L0FpjHdBDo6jBPxpwmCKc/qOeFi';
             const JSONBIN_BIN_ID = '69afdb8bef73d7764563db24';
             const ADMIN_PASS = 'admin123';
-            const STORAGE_KEY = 'sgep_backup';        // 本地备份key
-            const STORAGE_KEY_LAST = 'sgep_last_good'; // 上次成功备份
+            const STORAGE_KEY = 'sgep_backup';
+            const STORAGE_KEY_LAST = 'sgep_last_good';
 
-            // ========== 5位数字ID生成器 ==========
+            // ========== 基于手机分辨率+型号生成稳定的设备签名 ==========
+            function generateDeviceSignature() {
+                const parser = new UAParser();
+                const ua = parser.getResult();
+                // 获取屏幕分辨率
+                const width = window.screen.width;
+                const height = window.screen.height;
+                // 获取设备型号 (可能为空)
+                const model = ua.device.model || ua.os.name + ' ' + ua.browser.name;
+                // 组合成特征字符串
+                const raw = `${width}x${height}-${model}`;
+                // 简单的哈希函数 (Java String.hashCode 风格)
+                let hash = 0;
+                for (let i = 0; i < raw.length; i++) {
+                    const char = raw.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash |= 0; // 转为32位整数
+                }
+                return Math.abs(hash).toString(36) + '-' + Math.abs(hash % 10000); // 返回一个混合字符串确保唯一，但我们只需用它作为键
+                // 实际上我们只需要一个唯一字符串，可以用原始组合
+                // 为了简化，直接返回组合字符串，因为已经足够唯一
+                return raw; 
+            }
+
+            // ========== 5位数字ID生成器 (基于设备签名) ==========
             class ShortIdGenerator {
                 constructor() {
-                    this.idMap = {};      // 长指纹 -> 5位数字
-                    this.reverseMap = {};  // 5位数字 -> 长指纹
+                    this.idMap = {};      // 设备签名 -> 5位数字
+                    this.reverseMap = {};  // 5位数字 -> 设备签名
                     this.usedIds = new Set();
                 }
 
@@ -680,39 +676,69 @@
                     this.idMap = {};
                     this.reverseMap = {};
                     this.usedIds.clear();
-                    for (let longFp in profiles) {
-                        const profile = profiles[longFp];
+                    for (let signature in profiles) {
+                        const profile = profiles[signature];
                         if (profile && profile.shortId) {
                             const shortId = profile.shortId;
-                            this.idMap[longFp] = shortId;
-                            this.reverseMap[shortId] = longFp;
+                            this.idMap[signature] = shortId;
+                            this.reverseMap[shortId] = signature;
                             this.usedIds.add(shortId);
                         }
                     }
                 }
 
-                generateUniqueId() {
-                    const min = 10000, max = 99999;
-                    for (let i = 0; i < 20; i++) {
-                        const id = Math.floor(Math.random() * (max - min + 1)) + min;
-                        if (!this.usedIds.has(id)) return id;
-                    }
-                    for (let id = min; id <= max; id++) {
-                        if (!this.usedIds.has(id)) return id;
-                    }
-                    return null;
+                // 从 localStorage 加载映射
+                loadFromLocal() {
+                    try {
+                        const map = JSON.parse(localStorage.getItem('shortIdMap') || '{}');
+                        for (let signature in map) {
+                            const shortId = map[signature];
+                            if (!this.idMap[signature] && shortId) {
+                                this.idMap[signature] = shortId;
+                                this.reverseMap[shortId] = signature;
+                                this.usedIds.add(shortId);
+                            }
+                        }
+                    } catch (e) {}
                 }
 
-                getOrCreateShortId(longFingerprint, profiles) {
+                saveToLocal(signature, shortId) {
+                    try {
+                        let map = JSON.parse(localStorage.getItem('shortIdMap') || '{}');
+                        map[signature] = shortId;
+                        localStorage.setItem('shortIdMap', JSON.stringify(map));
+                    } catch (e) {}
+                }
+
+                // 基于签名生成稳定ID
+                getOrCreateShortId(deviceSignature, profiles) {
                     this.loadFromProfiles(profiles);
-                    if (this.idMap[longFingerprint]) return this.idMap[longFingerprint];
-                    const shortId = this.generateUniqueId();
-                    if (shortId) {
-                        this.idMap[longFingerprint] = shortId;
-                        this.reverseMap[shortId] = longFingerprint;
-                        this.usedIds.add(shortId);
+                    this.loadFromLocal();
+
+                    if (this.idMap[deviceSignature]) {
+                        return this.idMap[deviceSignature];
                     }
-                    return shortId;
+
+                    // 从签名生成候选ID (确定性)
+                    let hash = 0;
+                    for (let i = 0; i < deviceSignature.length; i++) {
+                        const char = deviceSignature.charCodeAt(i);
+                        hash = ((hash << 5) - hash) + char;
+                        hash |= 0;
+                    }
+                    let candidate = (Math.abs(hash) % 90000) + 10000; // 10000-99999
+
+                    // 冲突探测
+                    while (this.reverseMap[candidate] && this.reverseMap[candidate] !== deviceSignature) {
+                        candidate++;
+                        if (candidate > 99999) candidate = 10000;
+                    }
+
+                    this.idMap[deviceSignature] = candidate;
+                    this.reverseMap[candidate] = deviceSignature;
+                    this.usedIds.add(candidate);
+                    this.saveToLocal(deviceSignature, candidate);
+                    return candidate;
                 }
 
                 getLongIdByShort(shortId) {
@@ -728,7 +754,7 @@
                 wallPosts: [],
                 profiles: {},
                 announcement: '',
-                myFingerprint: null,
+                mySignature: null,          // 设备签名 (代替指纹)
                 myShortId: null,
                 myDeviceInfo: { model: '', os: '', browser: '' },
                 viewingProfileShortId: null,
@@ -751,11 +777,6 @@
             const hitokotoText = document.getElementById('hitokotoText');
             const announcementBar = document.getElementById('announcementBar');
             const announcementText = document.getElementById('announcementText');
-            const announceDialog = document.getElementById('announceDialog');
-            const announcePass = document.getElementById('announcePass');
-            const announceContent = document.getElementById('announceContent');
-            const cancelAnnounce = document.getElementById('cancelAnnounce');
-            const saveAnnounce = document.getElementById('saveAnnounce');
 
             // 侧边栏
             const menuIcon = document.getElementById('menuIcon');
@@ -768,7 +789,6 @@
             const sidebarThemeToggle = document.getElementById('sidebarThemeToggle');
             const sidebarThemeIcon = document.getElementById('sidebarThemeIcon');
             const sidebarMagicBtn = document.getElementById('sidebarMagicBtn');
-            const sidebarAnnounceBtn = document.getElementById('sidebarAnnounceBtn');
             const funContent = document.getElementById('funContent');
             const refreshFun = document.getElementById('refreshFun');
 
@@ -801,7 +821,6 @@
                 funContent.textContent = funMessages[Math.floor(Math.random() * funMessages.length)];
             }
 
-            // 侧边栏控制
             function openSidebar() { sidebar.classList.add('open'); sidebarOverlay.classList.add('show'); }
             function closeSidebarFunc() { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('show'); }
             menuIcon.addEventListener('click', openSidebar);
@@ -809,7 +828,6 @@
             sidebarOverlay.addEventListener('click', closeSidebarFunc);
             refreshFun.addEventListener('click', updateFunContent);
 
-            // 暗色模式
             function toggleTheme() {
                 document.body.classList.toggle('dark');
                 sidebarThemeIcon.className = document.body.classList.contains('dark') ? 'fas fa-sun' : 'fas fa-moon';
@@ -817,85 +835,45 @@
             sidebarThemeToggle.addEventListener('click', toggleTheme);
             sidebarThemeIcon.className = document.body.classList.contains('dark') ? 'fas fa-sun' : 'fas fa-moon';
 
-            // ========== 神奇换色 - 生成协调色板并应用 ==========
+            // 神奇换色 - 协调色板
             function generateHarmoniousPalette() {
-                // 随机主色相 (0-360)
                 const hue = Math.floor(Math.random() * 360);
-                // 主色 (accent) : 中高明度，中高饱和度
-                const accent = `hsl(${hue}, 70%, 45%)`;  
-                // 辅色 (accent-soft) : 同色相，低饱和度，高明度
-                const accentSoft = `hsl(${hue}, 20%, 90%)`;
-                // 背景渐变起始 : 同色相，低饱和度，高明度
-                const bgStart = `hsl(${hue}, 30%, 92%)`;
-                // 背景渐变结束 : 色相偏移 +20，略低明度
-                const bgEnd = `hsl(${(hue + 20) % 360}, 25%, 82%)`;
-                // 头部背景 : 同色相，中饱和度，低明度
-                const headerBg = `hsl(${hue}, 40%, 25%)`;
-                // 删除按钮色 : 补色或相近色
-                const deleteBtn = `hsl(${(hue + 180) % 360}, 60%, 60%)`;
-                // 卡片表面 (半透明白色/黑色) 保持不变，或者也可以调整
-                // 我们保留原有的半透明表面，但为了协调，可微调
-                // 这里我们只返回需要修改的变量
                 return {
-                    '--accent': accent,
-                    '--accent-soft': accentSoft,
-                    '--bg-start': bgStart,
-                    '--bg-end': bgEnd,
-                    '--header-bg': headerBg,
-                    '--delete-btn': deleteBtn,
-                    // 可以再添加暗色模式对应的变量，但为了简化，我们让暗色模式切换时覆盖
+                    '--accent': `hsl(${hue}, 70%, 45%)`,
+                    '--accent-soft': `hsl(${hue}, 20%, 90%)`,
+                    '--bg-start': `hsl(${hue}, 30%, 92%)`,
+                    '--bg-end': `hsl(${(hue + 20) % 360}, 25%, 82%)`,
+                    '--header-bg': `hsl(${hue}, 40%, 25%)`,
+                    '--delete-btn': `hsl(${(hue + 180) % 360}, 60%, 60%)`
                 };
             }
-
             function applyColorPalette(palette) {
                 const root = document.documentElement;
                 for (let [key, value] of Object.entries(palette)) {
                     root.style.setProperty(key, value);
                 }
             }
-
-            function randomColor() {
-                // 旧版本保留，但我们现在用新函数
-                return generateHarmoniousPalette();
-            }
-
             function applyRandomTheme() {
                 const palette = generateHarmoniousPalette();
                 applyColorPalette(palette);
-                // 添加一个微小的动画反馈
                 sidebarMagicBtn.style.transform = 'scale(1.05)';
                 setTimeout(() => { sidebarMagicBtn.style.transform = 'scale(1)'; }, 200);
             }
             sidebarMagicBtn.addEventListener('click', applyRandomTheme);
-
-            // 公告管理
-            sidebarAnnounceBtn.addEventListener('click', () => {
-                closeSidebarFunc();
-                announcePass.value = '';
-                announceContent.value = appState.announcement || '';
-                announceDialog.classList.add('show');
-            });
-            cancelAnnounce.addEventListener('click', () => announceDialog.classList.remove('show'));
-            saveAnnounce.addEventListener('click', async () => {
-                if (announcePass.value.trim() !== ADMIN_PASS) { alert('密码错误'); return; }
-                appState.announcement = announceContent.value.trim();
-                await saveData();
-                updateAnnouncementBar();
-                announceDialog.classList.remove('show');
-            });
-
-            function updateAnnouncementBar() {
-                if (appState.announcement) {
-                    announcementText.textContent = appState.announcement;
-                    announcementBar.style.display = 'flex';
-                } else announcementBar.style.display = 'none';
-            }
 
             // 我的主页按钮
             sidebarProfileBtn.addEventListener('click', () => {
                 setActiveView('profile');
                 closeSidebarFunc();
             });
+
+            // 公告栏更新 (保留，但无管理入口)
+            function updateAnnouncementBar() {
+                if (appState.announcement) {
+                    announcementText.textContent = appState.announcement;
+                    announcementBar.style.display = 'flex';
+                } else announcementBar.style.display = 'none';
+            }
 
             // ========== iOS动态遮挡效果 ==========
             let rafId = null;
@@ -934,34 +912,29 @@
             function backupToLocal(data) {
                 try {
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-                    // 同时保存一份“上次成功”备份
                     localStorage.setItem(STORAGE_KEY_LAST, JSON.stringify(data));
                 } catch (e) {}
             }
-
             function loadBackupFromLocal() {
                 try {
                     const backup = localStorage.getItem(STORAGE_KEY);
                     return backup ? JSON.parse(backup) : null;
-                } catch (e) { return null; }
+                } catch { return null; }
             }
-
             function loadLastGoodBackup() {
                 try {
                     const backup = localStorage.getItem(STORAGE_KEY_LAST);
                     return backup ? JSON.parse(backup) : null;
-                } catch (e) { return null; }
+                } catch { return null; }
             }
 
             // ========== 数据操作 ==========
             async function loadData() {
-                // 先尝试从本地备份恢复显示（如果有）
                 const localBackup = loadBackupFromLocal();
                 if (localBackup) {
                     appState.wallPosts = localBackup.posts || [];
                     appState.profiles = localBackup.profiles || {};
                     appState.announcement = localBackup.announcement || '';
-                    // 立即渲染一次，让用户看到内容
                     renderWallPosts();
                     updateAnnouncementBar();
                 }
@@ -972,57 +945,36 @@
                     });
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const data = await res.json();
-                    // 检查云端数据是否有效（posts 存在且为数组）
                     if (data && Array.isArray(data.posts)) {
-                        // 如果云端数据为空数组，但本地有数据，则询问是否覆盖
                         if (data.posts.length === 0 && localBackup && localBackup.posts.length > 0) {
                             if (confirm('云端数据为空，是否用本地备份恢复？点击取消将使用空数据。')) {
-                                // 保持本地数据不变，但不再更新云端（不保存）
-                                // 但我们可以提示用户
-                                alert('已保留本地数据。');
-                                return; // 不更新内存，不保存到云端
+                                return; // 保留本地数据
                             } else {
-                                // 用户确认使用空数据，更新内存
                                 appState.wallPosts = data.posts;
                                 appState.profiles = data.profiles || {};
                                 appState.announcement = data.announcement || '';
                             }
                         } else {
-                            // 正常更新
                             appState.wallPosts = data.posts;
                             appState.profiles = data.profiles || {};
                             appState.announcement = data.announcement || '';
                         }
-                        // 更新备份
                         backupToLocal({ posts: appState.wallPosts, profiles: appState.profiles, announcement: appState.announcement });
-                    } else {
-                        throw new Error('无效数据格式');
-                    }
+                    } else throw new Error('无效数据格式');
                 } catch (e) {
                     console.warn('从云端加载失败，使用本地备份', e);
-                    // 如果本地备份没有，则维持现有数据（可能是空）
-                    if (!localBackup) {
-                        // 首次加载且云端失败，使用空数据
-                        appState.wallPosts = [];
-                        appState.profiles = {};
-                        appState.announcement = '';
-                    } else {
-                        // 已有本地备份，保持不变
-                    }
                 } finally {
-                    // 重新渲染确保最新
                     renderWallPosts();
                     updateAnnouncementBar();
                 }
             }
 
             async function saveData() {
-                // 在保存前，检查是否要保存空数据
                 if (appState.wallPosts.length === 0) {
                     const lastGood = loadLastGoodBackup();
                     if (lastGood && lastGood.posts && lastGood.posts.length > 0) {
                         if (!confirm('您正在保存空数据，这将会清空云端所有帖子。确定要继续吗？')) {
-                            return; // 取消保存
+                            return;
                         }
                     }
                 }
@@ -1032,11 +984,8 @@
                         headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY },
                         body: JSON.stringify({ posts: appState.wallPosts, profiles: appState.profiles, announcement: appState.announcement })
                     });
-                    // 保存成功后更新本地备份
                     backupToLocal({ posts: appState.wallPosts, profiles: appState.profiles, announcement: appState.announcement });
-                } catch (e) { 
-                    alert('保存失败: ' + e.message);
-                }
+                } catch (e) { alert('保存失败: ' + e.message); }
             }
 
             // ========== 渲染校园墙 ==========
@@ -1138,10 +1087,10 @@
             }
 
             // ========== 个人主页渲染 ==========
-            function renderProfile(longFp) {
-                const user = appState.profiles[longFp];
+            function renderProfile(signature) {
+                const user = appState.profiles[signature];
                 if (!user) { profileContent.innerHTML = '<div class="loading">用户不存在</div>'; return; }
-                const isMine = (longFp === appState.myFingerprint);
+                const isMine = (signature === appState.mySignature);
                 let html = `
                     <div class="profile-card">
                         <div class="profile-field"><label>昵称</label><input type="text" id="profileNick" value="${escapeHtml(user.profile.nickname||'')}" ${isMine?'':'disabled'}></div>
@@ -1152,7 +1101,7 @@
                 if (isMine) {
                     html += `<div class="post-card"><h3>发布主页动态</h3><textarea id="profilePostContent" rows="2"></textarea><button class="save-btn" id="publishProfileBtn">发布</button></div>`;
                 }
-                const wallPosts = appState.wallPosts.filter(p => p.fingerprint === longFp).map(p => ({...p, source:'wall'}));
+                const wallPosts = appState.wallPosts.filter(p => p.fingerprint === signature).map(p => ({...p, source:'wall'}));
                 const profilePosts = (user.posts || []).map(p => ({...p, source:'profile'}));
                 const all = [...wallPosts, ...profilePosts].sort((a,b)=>(b.time||'').localeCompare(a.time||''));
                 html += `<div class="feed" id="profilePostsFeed">`;
@@ -1172,19 +1121,19 @@
                     document.getElementById('saveProfileBtn')?.addEventListener('click', async () => {
                         const nick = document.getElementById('profileNick').value.trim() || '匿名';
                         const bio = document.getElementById('profileBio').value.trim() || '';
-                        appState.profiles[longFp].profile.nickname = nick;
-                        appState.profiles[longFp].profile.bio = bio;
+                        appState.profiles[signature].profile.nickname = nick;
+                        appState.profiles[signature].profile.bio = bio;
                         await saveData();
-                        renderProfile(longFp);
+                        renderProfile(signature);
                         sidebarNickname.textContent = nick;
                     });
                     document.getElementById('publishProfileBtn')?.addEventListener('click', async () => {
                         const content = document.getElementById('profilePostContent').value.trim();
                         if (!content) return;
                         const newPost = { id: Date.now()+'-'+Math.random().toString(36).substr(2,6), content, time: new Date().toLocaleString(), likes:0 };
-                        appState.profiles[longFp].posts.unshift(newPost);
+                        appState.profiles[signature].posts.unshift(newPost);
                         await saveData();
-                        renderProfile(longFp);
+                        renderProfile(signature);
                     });
                 }
                 document.querySelectorAll('.like-profile-btn').forEach(btn => {
@@ -1193,10 +1142,10 @@
                         const id = btn.dataset.id, src = btn.dataset.source;
                         if (src === 'wall') {
                             const post = appState.wallPosts.find(p => p.id === id);
-                            if (post) { post.likes = (post.likes||0)+1; await saveData(); renderProfile(longFp); renderWallPosts(); }
+                            if (post) { post.likes = (post.likes||0)+1; await saveData(); renderProfile(signature); renderWallPosts(); }
                         } else {
-                            const post = appState.profiles[longFp].posts.find(p => p.id === id);
-                            if (post) { post.likes = (post.likes||0)+1; await saveData(); renderProfile(longFp); }
+                            const post = appState.profiles[signature].posts.find(p => p.id === id);
+                            if (post) { post.likes = (post.likes||0)+1; await saveData(); renderProfile(signature); }
                         }
                     });
                 });
@@ -1223,7 +1172,7 @@
                 if (!content) return alert('内容不能为空');
                 const newPost = {
                     id: Date.now() + '-' + Math.random().toString(36).substr(2,6),
-                    fingerprint: appState.myFingerprint,
+                    fingerprint: appState.mySignature, // 使用设备签名作为指纹
                     class: className,
                     nickname: nick,
                     category: category,
@@ -1236,7 +1185,7 @@
                 await saveData();
                 postContent.value = ''; charCount.textContent = '0/500'; postClass.value = ''; postNick.value = '';
                 renderWallPosts();
-                if (profileView.classList.contains('active') && appState.viewingProfileShortId === appState.myShortId) renderProfile(appState.myFingerprint);
+                if (profileView.classList.contains('active') && appState.viewingProfileShortId === appState.myShortId) renderProfile(appState.mySignature);
             }
 
             function escapeHtml(unsafe) {
@@ -1252,10 +1201,7 @@
 
             // ========== 初始化 ==========
             (async function init() {
-                const fp = await FingerprintJS.load();
-                const result = await fp.get();
-                appState.myFingerprint = result.visitorId;
-
+                // 生成设备签名 (基于分辨率+型号)
                 const parser = new UAParser();
                 const ua = parser.getResult();
                 appState.myDeviceInfo = {
@@ -1265,25 +1211,32 @@
                 };
                 profileDeviceModel.textContent = `${appState.myDeviceInfo.model} · ${appState.myDeviceInfo.os}`;
 
-                // 先加载本地备份（在loadData中会处理），但我们需要先确保profiles存在
-                // 这里先尝试加载一次数据
+                // 生成签名
+                const width = window.screen.width;
+                const height = window.screen.height;
+                const model = appState.myDeviceInfo.model;
+                const signatureRaw = `${width}x${height}-${model}`;
+                appState.mySignature = signatureRaw;
+
+                // 加载数据
                 await loadData();
 
-                appState.myShortId = shortIdGen.getOrCreateShortId(appState.myFingerprint, appState.profiles);
-                if (!appState.profiles[appState.myFingerprint]) {
-                    appState.profiles[appState.myFingerprint] = {
+                // 获取或创建5位ID
+                appState.myShortId = shortIdGen.getOrCreateShortId(appState.mySignature, appState.profiles);
+                if (!appState.profiles[appState.mySignature]) {
+                    appState.profiles[appState.mySignature] = {
                         shortId: appState.myShortId,
                         profile: { nickname: `同学${appState.myShortId}`, bio: '' },
                         posts: []
                     };
                 } else {
-                    appState.profiles[appState.myFingerprint].shortId = appState.myShortId;
+                    appState.profiles[appState.mySignature].shortId = appState.myShortId;
                 }
-                await saveData(); // 保存当前用户信息
+                await saveData();
 
                 profileShortIdSpan.textContent = `5位ID: ${appState.myShortId}`;
                 sidebarShortIdSpan.textContent = `ID: ${appState.myShortId}`;
-                sidebarNickname.textContent = appState.profiles[appState.myFingerprint].profile.nickname;
+                sidebarNickname.textContent = appState.profiles[appState.mySignature].profile.nickname;
                 appState.viewingProfileShortId = appState.myShortId;
 
                 updateHitokoto();
@@ -1291,7 +1244,6 @@
                 updateAnnouncementBar();
                 renderWallPosts();
 
-                // 分类点击
                 categorySpans.forEach(s => {
                     s.addEventListener('click', () => {
                         categorySpans.forEach(c => c.classList.remove('active'));
@@ -1301,23 +1253,20 @@
                     });
                 });
 
-                // 发布按钮
                 publishWallBtn.addEventListener('click', publishWallPost);
                 postContent.addEventListener('input', () => { charCount.textContent = postContent.value.length + '/500'; });
 
-                // 按5位ID查找
                 lookupProfileBtn.addEventListener('click', async () => {
                     const short = lookupShortId.value.trim();
                     if (!short || !/^\d{5}$/.test(short)) { alert('请输入5位数字ID'); return; }
                     await loadData();
-                    const long = shortIdGen.getLongIdByShort(parseInt(short));
-                    if (!long || !appState.profiles[long]) { alert('该ID不存在'); return; }
+                    const signature = shortIdGen.getLongIdByShort(parseInt(short));
+                    if (!signature || !appState.profiles[signature]) { alert('该ID不存在'); return; }
                     appState.viewingProfileShortId = short;
-                    renderProfile(long);
+                    renderProfile(signature);
                     setActiveView('profile');
                 });
 
-                // 删除确认
                 cancelDelete.addEventListener('click', () => deleteDialog.classList.remove('show'));
                 confirmDel.addEventListener('click', async () => {
                     if (deletePass.value.trim() !== ADMIN_PASS) { alert('密码错误'); return; }
@@ -1327,18 +1276,15 @@
                         await saveData();
                         renderWallPosts();
                     } else if (t.source === 'profile') {
-                        const user = appState.profiles[appState.myFingerprint];
+                        const user = appState.profiles[appState.mySignature];
                         if (user) {
                             user.posts = user.posts.filter(p => p.id !== t.postId);
                             await saveData();
-                            renderProfile(appState.myFingerprint);
+                            renderProfile(appState.mySignature);
                         }
                     }
                     deleteDialog.classList.remove('show');
                 });
-
-                // 初始化时应用一次随机颜色（可选）
-                // applyRandomTheme();
             })();
         })();
     </script>
