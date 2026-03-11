@@ -4,12 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>上蔡二高 · 校园墙 + 个人主页</title>
-    <!-- 圆润字体 & 图标库 -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- FingerprintJS 和 UA Parser -->
+    <!-- 使用系统字体，移除 Google Fonts 提升加载速度 -->
+    <style>
+        * {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
+                         "Helvetica Neue", Arial, sans-serif,
+                         "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        }
+    </style>
+    <!-- Font Awesome 6 (使用国内 BootCDN 加速) -->
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- FingerprintJS 和 UA Parser (使用国内 CDN) -->
     <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ua-parser-js@1.0.35/dist/ua-parser.min.js"></script>
     <style>
@@ -59,7 +64,6 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Inter', system-ui, sans-serif;
             transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
         }
 
@@ -319,7 +323,7 @@
             cursor: pointer;
             font-size: 0.85rem;
         }
-        /* 新增：显示指纹ID的样式 */
+        /* 显示指纹ID的样式 */
         .post-fingerprint {
             font-size: 0.7rem;
             color: var(--text-tertiary);
@@ -630,7 +634,7 @@
                 myFingerprint: null,          // 当前设备指纹
                 myDeviceInfo: { model: '', os: '', browser: '' },
                 viewingProfileFingerprint: null,
-                deleteTarget: { type: null, fingerprint: null, postId: null, source: null }  // source 用于区分 'wall' 或 'profile'
+                deleteTarget: { source: null, fingerprint: null, postId: null }
             };
 
             // DOM 元素
@@ -734,7 +738,7 @@
 
                 cancelDelete.addEventListener('click', () => {
                     deleteDialog.classList.remove('show');
-                    appState.deleteTarget = { type: null, fingerprint: null, postId: null, source: null };
+                    appState.deleteTarget = { source: null, fingerprint: null, postId: null };
                 });
 
                 confirmDel.addEventListener('click', async () => {
@@ -762,7 +766,7 @@
                         }
                     }
                     deleteDialog.classList.remove('show');
-                    appState.deleteTarget = { type: null, fingerprint: null, postId: null, source: null };
+                    appState.deleteTarget = { source: null, fingerprint: null, postId: null };
                 });
             })();
 
@@ -801,7 +805,7 @@
                 }
             }
 
-            // ---------- 校园墙渲染 (增加指纹显示) ----------
+            // ---------- 校园墙渲染 ----------
             function renderWallPosts() {
                 const filtered = appState.currentWallCategory === 'all'
                     ? appState.wallPosts
@@ -853,7 +857,7 @@
                 });
                 wallFeed.innerHTML = html;
 
-                // 事件绑定 (点赞、评论、删除、点击作者)
+                // 事件绑定
                 document.querySelectorAll('#wallView .like-btn').forEach(btn => {
                     btn.addEventListener('click', async (e) => {
                         e.stopPropagation();
@@ -933,7 +937,7 @@
                 });
             }
 
-            // ---------- 个人主页渲染 (合并校园墙帖子) ----------
+            // ---------- 个人主页渲染 ----------
             function renderProfile(fingerprint) {
                 const userData = appState.profiles[fingerprint];
                 if (!userData) {
@@ -952,16 +956,14 @@
                         time: p.time,
                         likes: p.likes || 0,
                         source: 'wall',
-                        extra: { class: p.class, nickname: p.nickname, category: p.category } // 保留额外信息供显示
+                        extra: { class: p.class, nickname: p.nickname, category: p.category }
                     }));
 
-                // 标记主页动态的来源
                 const profilePostsMarked = profilePosts.map(p => ({
                     ...p,
                     source: 'profile'
                 }));
 
-                // 合并并按时间倒序
                 const allPosts = [...wallPostsForUser, ...profilePostsMarked].sort((a, b) => (b.time || '').localeCompare(a.time || ''));
 
                 const isMine = (fingerprint === appState.myFingerprint);
@@ -998,7 +1000,6 @@
                 } else {
                     allPosts.forEach(post => {
                         if (post.source === 'wall') {
-                            // 校园墙帖子显示样式
                             html += `
                                 <div class="feed-item" data-post-id="${post.id}" data-source="wall">
                                     <div class="item-header">
@@ -1015,7 +1016,6 @@
                                 </div>
                             `;
                         } else {
-                            // 主页动态
                             html += `
                                 <div class="feed-item" data-post-id="${post.id}" data-source="profile">
                                     <div class="item-header">
@@ -1038,7 +1038,6 @@
 
                 profileContent.innerHTML = html;
 
-                // 保存资料
                 if (isMine) {
                     document.getElementById('saveProfileBtn')?.addEventListener('click', async () => {
                         const nick = document.getElementById('profileNick').value.trim() || '匿名';
@@ -1064,7 +1063,6 @@
                     });
                 }
 
-                // 点赞事件 (区分来源)
                 document.querySelectorAll('#profilePostsFeed .like-profile-btn').forEach(btn => {
                     btn.addEventListener('click', async (e) => {
                         e.stopPropagation();
@@ -1076,7 +1074,7 @@
                                 post.likes = (post.likes || 0) + 1;
                                 await saveData();
                                 renderProfile(fingerprint);
-                                renderWallPosts(); // 同时更新校园墙视图
+                                renderWallPosts();
                             }
                         } else {
                             const post = appState.profiles[fingerprint].posts.find(p => p.id === postId);
@@ -1089,7 +1087,6 @@
                     });
                 });
 
-                // 删除事件
                 document.querySelectorAll('#profilePostsFeed .delete-post').forEach(btn => {
                     btn.addEventListener('click', () => {
                         const postId = btn.dataset.postId;
@@ -1105,28 +1102,22 @@
                 });
             }
 
-            // 切换视图
             function setActiveView(view) {
                 if (view === 'wall') {
                     wallView.classList.add('active');
                     profileView.classList.remove('active');
                     navWallBtn.classList.add('active');
                     navProfileBtn.classList.remove('active');
-                    renderWallPosts(); // 刷新
+                    renderWallPosts();
                 } else {
                     wallView.classList.remove('active');
                     profileView.classList.add('active');
                     navWallBtn.classList.remove('active');
                     navProfileBtn.classList.add('active');
-                    // 如果当前查看的个人主页指纹不是自己的，可能需要在进入时重置为自己？这里保持原样
-                    if (appState.viewingProfileFingerprint !== appState.myFingerprint) {
-                        // 可以选择跳回自己主页或保持，这里保持
-                    }
                     renderProfile(appState.viewingProfileFingerprint);
                 }
             }
 
-            // 校园墙发布
             async function publishWallPost() {
                 const className = postClass.value.trim() || '未填班级';
                 const nick = postNick.value.trim() || '匿名';
@@ -1152,7 +1143,6 @@
                 postClass.value = '';
                 postNick.value = '';
                 renderWallPosts();
-                // 如果当前在个人主页且查看的是自己，刷新个人主页
                 if (profileView.classList.contains('active') && appState.viewingProfileFingerprint === appState.myFingerprint) {
                     renderProfile(appState.myFingerprint);
                 }
@@ -1161,7 +1151,10 @@
             function escapeHtml(unsafe) {
                 if (!unsafe) return unsafe;
                 return unsafe.replace(/[&<>"]/g, function(m) {
-                    if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; if(m === '"') return '&quot;';
+                    if(m === '&') return '&amp;';
+                    if(m === '<') return '&lt;';
+                    if(m === '>') return '&gt;';
+                    if(m === '"') return '&quot;';
                     return m;
                 });
             }
