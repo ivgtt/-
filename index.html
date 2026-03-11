@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>上蔡县第二高级中学 · 校园墙</title>
-    <!-- 圆润字体：Inter + 系统回退 -->
+    <title>上蔡二高 · 校园墙 + 个人主页</title>
+    <!-- 圆润字体 & 图标库 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-    <!-- Font Awesome 6 (免费图标库) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- FingerprintJS 和 UA Parser -->
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ua-parser-js@1.0.35/dist/ua-parser.min.js"></script>
     <style>
         /* 全局变量 – 亮色模式 (默认) */
         :root {
@@ -21,22 +23,18 @@
             --text-secondary: #3e5569;
             --text-tertiary: #6b7f94;
             --border-light: #d0deed;
-            --accent: #2c4c6e;          /* 主色调 蓝灰 */
+            --accent: #2c4c6e;
             --accent-soft: #e1ebf5;
             --card-shadow: 0 8px 20px -12px rgba(0,20,40,0.25);
             --tag-bg: #e6eef8;
-            --tag-active: #2c4c6e;       /* 与accent联动 */
-            --tag-active-text: white;
             --input-bg: #ffffff;
             --placeholder: #9aafc4;
             --delete-btn: #b55a5a;
-            --delete-btn-hover: #a14242;
-            --transition: 0.2s ease;
             --header-bg: #243b4f;
             --header-text: #ffffff;
         }
 
-        /* 暗色模式 (保留独立配色) */
+        /* 暗色模式 */
         body.dark {
             --bg-gradient-start: #1a262f;
             --bg-gradient-end: #0f1a24;
@@ -46,16 +44,13 @@
             --text-secondary: #c0d2e2;
             --text-tertiary: #9bb0c2;
             --border-light: #2f4255;
-            --accent: #5b8cb0;            /* 暗色主色调 */
+            --accent: #5b8cb0;
             --accent-soft: #253746;
             --card-shadow: 0 8px 20px -8px rgba(0,0,0,0.6);
             --tag-bg: #2d3f50;
-            --tag-active: #5b8cb0;
-            --tag-active-text: #0f1a24;
             --input-bg: #25323e;
             --placeholder: #728da5;
             --delete-btn: #c47a7a;
-            --delete-btn-hover: #d68b8b;
             --header-bg: #0e1a24;
             --header-text: #eef5fc;
         }
@@ -64,7 +59,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
         }
 
@@ -77,12 +72,12 @@
             color: var(--text-primary);
         }
 
-        .wall-container {
+        .container {
             max-width: 820px;
             width: 100%;
         }
 
-        /* 头部卡片 */
+        /* 头部卡片 (整合导航) */
         .header-card {
             background: var(--header-bg);
             color: var(--header-text);
@@ -106,7 +101,6 @@
             font-weight: 400;
             margin-left: 0.8rem;
             opacity: 0.8;
-            letter-spacing: 0.4px;
         }
 
         .header-sub {
@@ -116,6 +110,30 @@
             margin-top: 0.8rem;
             font-weight: 400;
             color: rgba(255,255,255,0.8);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 0.8rem;
+        }
+
+        .nav-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 3rem;
+            padding: 0.5rem 1.2rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            backdrop-filter: blur(4px);
+            color: white;
+        }
+
+        .nav-btn.active {
+            background: var(--accent);
+            border-color: white;
         }
 
         .theme-toggle {
@@ -131,33 +149,21 @@
             backdrop-filter: blur(4px);
         }
 
-        .theme-toggle i {
-            font-size: 1rem;
+        /* 视图切换 */
+        .view {
+            display: none;
+        }
+        .view.active {
+            display: block;
         }
 
-        /* 设置齿轮图标 */
-        .settings-icon {
-            position: absolute;
-            top: 1.2rem;
-            right: 1.5rem;
-            font-size: 1.8rem;
-            color: rgba(255,255,255,0.7);
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .settings-icon:hover {
-            color: white;
-            transform: rotate(30deg);
-        }
-
-        /* 分类标签 */
+        /* ---------- 校园墙样式 ---------- */
         .categories {
             display: flex;
             flex-wrap: wrap;
             gap: 0.5rem;
             margin-bottom: 1.5rem;
         }
-
         .cat {
             background: var(--tag-bg);
             color: var(--text-secondary);
@@ -167,16 +173,12 @@
             font-weight: 500;
             cursor: pointer;
             border: 1px solid transparent;
-            transition: 0.1s;
         }
-
         .cat.active {
-            background: var(--tag-active);
-            color: var(--tag-active-text);
+            background: var(--accent);
+            color: white;
             border-color: var(--accent);
         }
-
-        /* 发布卡片 (移回上方，始终显示) */
         .post-card {
             background: var(--surface);
             backdrop-filter: blur(10px);
@@ -186,7 +188,6 @@
             border: 1px solid var(--border-light);
             box-shadow: var(--card-shadow);
         }
-
         .post-card h3 {
             font-size: 1.1rem;
             font-weight: 600;
@@ -196,14 +197,12 @@
             gap: 0.5rem;
             color: var(--text-primary);
         }
-
         .input-row {
             display: flex;
             flex-wrap: wrap;
             gap: 0.8rem;
             margin-bottom: 1rem;
         }
-
         .input-row input, .input-row select, .input-row textarea {
             background: var(--input-bg);
             border: 1px solid var(--border-light);
@@ -214,25 +213,18 @@
             outline: none;
             flex: 1 1 auto;
         }
-
-        .input-row input::placeholder, .input-row textarea::placeholder {
-            color: var(--placeholder);
-        }
-
         .input-row textarea {
             border-radius: 1.8rem;
             min-height: 80px;
             width: 100%;
             resize: vertical;
         }
-
         .publish-actions {
             display: flex;
             justify-content: flex-end;
             gap: 1rem;
             align-items: center;
         }
-
         .btn-primary {
             background: var(--accent);
             border: none;
@@ -243,47 +235,21 @@
             font-size: 0.9rem;
             cursor: pointer;
             box-shadow: 0 6px 0 #1a3349;
-            transition: 0.1s;
             border: 1px solid rgba(255,255,255,0.2);
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
         }
-
-        .btn-primary:active {
-            transform: translateY(4px);
-            box-shadow: 0 2px 0 #1a3349;
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: 0 6px 0 #1a3349;
-        }
-
-        /* 帖子流 */
         .feed {
             display: flex;
             flex-direction: column;
             gap: 1.2rem;
+            margin-bottom: 2rem;
         }
-
-        /* 帖子淡入动画 */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
         .feed-item {
             background: var(--surface-solid);
             border-radius: 2rem;
             padding: 1.5rem 1.5rem 1rem;
             border: 1px solid var(--border-light);
             box-shadow: var(--card-shadow);
-            animation: fadeIn 0.3s ease-out;
         }
-
         .item-header {
             display: flex;
             align-items: center;
@@ -291,7 +257,6 @@
             flex-wrap: wrap;
             margin-bottom: 0.8rem;
         }
-
         .badge-class {
             background: var(--accent-soft);
             color: var(--text-primary);
@@ -299,14 +264,14 @@
             border-radius: 2rem;
             font-size: 0.75rem;
             font-weight: 600;
+            cursor: pointer;
         }
-
         .badge-nick {
             font-weight: 600;
             color: var(--text-secondary);
             font-size: 0.9rem;
+            cursor: pointer;
         }
-
         .badge-cat {
             background: var(--tag-bg);
             color: var(--text-secondary);
@@ -316,21 +281,17 @@
             font-weight: 600;
             text-transform: uppercase;
         }
-
         .item-time {
             margin-left: auto;
             font-size: 0.7rem;
             color: var(--text-tertiary);
         }
-
         .item-content {
             font-size: 1rem;
             line-height: 1.5;
             padding: 0.4rem 0 0.8rem;
-            color: var(--text-primary);
             white-space: pre-wrap;
         }
-
         .item-stats {
             display: flex;
             align-items: center;
@@ -338,8 +299,8 @@
             border-top: 1px solid var(--border-light);
             padding-top: 0.7rem;
             margin-top: 0.3rem;
+            flex-wrap: wrap;
         }
-
         .stat-btn {
             background: none;
             border: none;
@@ -349,19 +310,7 @@
             color: var(--text-tertiary);
             font-size: 0.85rem;
             cursor: pointer;
-            padding: 0.2rem 0.5rem;
-            border-radius: 2rem;
         }
-
-        .stat-btn:hover {
-            background: var(--accent-soft);
-            color: var(--text-primary);
-        }
-
-        .stat-btn.liked {
-            color: #e06767;
-        }
-
         .delete-btn {
             margin-left: auto;
             background: none;
@@ -369,16 +318,20 @@
             color: var(--delete-btn);
             cursor: pointer;
             font-size: 0.85rem;
-            padding: 0.2rem 0.7rem;
+        }
+        /* 新增：显示指纹ID的样式 */
+        .post-fingerprint {
+            font-size: 0.7rem;
+            color: var(--text-tertiary);
+            background: var(--accent-soft);
+            padding: 0.2rem 0.6rem;
             border-radius: 2rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.2rem;
+            margin-left: 0.5rem;
+            cursor: help;
         }
-
-        .delete-btn:hover {
-            background: rgba(180, 90, 90, 0.15);
-            color: var(--delete-btn-hover);
-        }
-
-        /* 评论区域 */
         .comments-section {
             margin-top: 1rem;
             background: var(--surface);
@@ -386,44 +339,27 @@
             padding: 1rem;
             border: 1px solid var(--border-light);
         }
-
         .comment-item {
-            display: flex;
-            flex-direction: column;
-            gap: 0.2rem;
             padding: 0.5rem 0;
             border-bottom: 1px dashed var(--border-light);
         }
-
         .comment-meta {
             display: flex;
             gap: 0.5rem;
-            align-items: baseline;
             font-size: 0.8rem;
         }
-
         .comment-nick {
             font-weight: 600;
-            color: var(--text-secondary);
         }
-
-        .comment-time {
-            color: var(--text-tertiary);
-            font-size: 0.65rem;
-        }
-
         .comment-content {
             font-size: 0.9rem;
-            color: var(--text-primary);
             padding-left: 0.5rem;
         }
-
         .add-comment {
             display: flex;
             gap: 0.5rem;
             margin-top: 0.8rem;
         }
-
         .add-comment input {
             flex: 1;
             background: var(--input-bg);
@@ -431,21 +367,120 @@
             border-radius: 3rem;
             padding: 0.5rem 1rem;
             font-size: 0.8rem;
-            color: var(--text-primary);
         }
 
-        .add-comment button {
+        /* 个人主页样式 */
+        .identity-card {
+            background: var(--surface);
+            backdrop-filter: blur(10px);
+            border-radius: 2rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-light);
+            box-shadow: var(--card-shadow);
+        }
+        .identity-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .device-icon {
+            font-size: 2.5rem;
+            color: var(--accent);
+        }
+        .device-model {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        .device-fingerprint {
+            font-size: 0.7rem;
+            color: var(--text-tertiary);
+            word-break: break-all;
+        }
+        .profile-card {
+            background: var(--surface-solid);
+            border-radius: 2rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-light);
+            box-shadow: var(--card-shadow);
+        }
+        .profile-field {
+            margin-bottom: 1.2rem;
+        }
+        .profile-field label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            color: var(--text-secondary);
+        }
+        .profile-field input, .profile-field textarea {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 2rem;
+            padding: 0.8rem 1.2rem;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            outline: none;
+        }
+        .profile-field textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        .save-btn {
             background: var(--accent);
             border: none;
             color: white;
+            padding: 0.6rem 2rem;
             border-radius: 3rem;
-            padding: 0.4rem 1.2rem;
-            font-size: 0.8rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #1a3349;
+        }
+
+        .lookup-card {
+            background: var(--surface);
+            border-radius: 2rem;
+            padding: 1.2rem 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-light);
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .lookup-card input {
+            flex: 1;
+            min-width: 200px;
+            background: var(--input-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 3rem;
+            padding: 0.6rem 1.2rem;
+            color: var(--text-primary);
+        }
+        .lookup-card button {
+            background: var(--accent);
+            border: none;
+            color: white;
+            padding: 0.6rem 1.5rem;
+            border-radius: 3rem;
             cursor: pointer;
         }
 
-        /* 密码弹窗 */
-        .delete-dialog {
+        /* 帖子来源标记 */
+        .source-tag {
+            font-size: 0.65rem;
+            background: var(--accent-soft);
+            padding: 0.2rem 0.6rem;
+            border-radius: 2rem;
+            color: var(--text-secondary);
+            margin-left: 0.5rem;
+        }
+
+        /* 弹窗 */
+        .dialog {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.5);
@@ -458,27 +493,18 @@
             opacity: 0;
             transition: 0.2s;
         }
-
-        .delete-dialog.show {
+        .dialog.show {
             visibility: visible;
             opacity: 1;
         }
-
         .dialog-box {
             background: var(--surface-solid);
             border-radius: 2rem;
             padding: 2rem;
             max-width: 350px;
             width: 90%;
-            border: 1px solid var(--border-light);
-            box-shadow: 0 20px 30px -10px black;
+            border: 2px solid var(--accent);
         }
-
-        .dialog-box p {
-            margin-bottom: 1rem;
-            font-weight: 600;
-        }
-
         .dialog-box input {
             width: 100%;
             padding: 0.8rem 1.2rem;
@@ -486,286 +512,40 @@
             border: 1px solid var(--border-light);
             background: var(--input-bg);
             color: var(--text-primary);
-            margin-bottom: 1.2rem;
+            margin: 1rem 0;
         }
-
         .dialog-actions {
             display: flex;
             justify-content: flex-end;
             gap: 0.8rem;
         }
-
-        .dialog-actions button {
-            padding: 0.4rem 1.2rem;
-            border-radius: 3rem;
-            border: none;
-            cursor: pointer;
-        }
-
-        .confirm-delete {
-            background: var(--delete-btn);
-            color: white;
-        }
-
         .loading {
             text-align: center;
             padding: 2rem;
             color: var(--text-tertiary);
         }
-
-        .footer-note {
-            margin-top: 2.5rem;
-            text-align: center;
-            color: var(--text-tertiary);
-            font-size: 0.8rem;
-        }
-
-        /* 公告弹窗 */
-        .announce-dialog {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            backdrop-filter: blur(5px);
-            visibility: hidden;
-            opacity: 0;
-            transition: 0.2s;
-        }
-
-        .announce-dialog.show {
-            visibility: visible;
-            opacity: 1;
-        }
-
-        .announce-box {
-            background: var(--surface-solid);
-            border-radius: 2.5rem;
-            padding: 2.2rem 2rem;
-            max-width: 450px;
-            width: 90%;
-            border: 2px solid var(--accent);
-            box-shadow: 0 20px 30px rgba(0,0,0,0.5);
-            text-align: center;
-        }
-
-        .announce-box p {
-            font-size: 1.1rem;
-            line-height: 1.6;
-            color: var(--text-primary);
-            margin-bottom: 1.5rem;
-        }
-
-        .announce-box .signature {
-            font-size: 1rem;
-            color: var(--text-tertiary);
-            border-top: 1px dashed var(--border-light);
-            padding-top: 1rem;
-            margin-bottom: 1.8rem;
-            font-style: italic;
-        }
-
-        .announce-box button {
-            background: var(--accent);
-            border: none;
-            color: white;
-            padding: 0.8rem 2.5rem;
-            border-radius: 3rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            border: 1px solid rgba(255,255,255,0.2);
-            box-shadow: 0 6px 0 #1a3349;
-        }
-
-        .announce-box button:active {
-            transform: translateY(4px);
-            box-shadow: 0 2px 0 #1a3349;
-        }
-
-        /* ---------- 设置面板 (第二页) ---------- */
-        .settings-panel {
-            background: var(--surface-solid);
-            border-radius: 2.5rem;
-            padding: 2rem 1.8rem;
-            margin-bottom: 2rem;
-            border: 2px solid var(--accent);
-            box-shadow: var(--card-shadow);
-            display: none;  /* 默认隐藏 */
-        }
-
-        .settings-panel h2 {
-            font-size: 1.8rem;
-            margin-bottom: 1.5rem;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-        }
-
-        .color-options {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .color-btn {
-            width: 3rem;
-            height: 3rem;
-            border-radius: 50%;
-            border: 3px solid transparent;
-            cursor: pointer;
-            transition: 0.2s;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-        .color-btn:hover {
-            transform: scale(1.1);
-            border-color: var(--text-primary);
-        }
-        .color-btn.active {
-            border-color: white;
-            box-shadow: 0 0 0 2px var(--accent);
-        }
-
-        .admin-request {
-            margin: 2rem 0;
-            padding: 1.5rem 0;
-            border-top: 2px dashed var(--border-light);
-            border-bottom: 2px dashed var(--border-light);
-        }
-
-        .admin-request button {
-            background: var(--accent);
-            border: none;
-            color: white;
-            padding: 1rem 2rem;
-            border-radius: 3rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            box-shadow: 0 6px 0 #1a3349;
-        }
-
-        .back-btn {
-            background: var(--text-tertiary);
-            border: none;
-            color: white;
-            padding: 0.8rem 2rem;
-            border-radius: 3rem;
-            font-size: 1rem;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-top: 1.5rem;
-        }
-
-        /* 问答弹窗 (申请管理员) */
-        .quiz-dialog {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2500;
-            backdrop-filter: blur(5px);
-            visibility: hidden;
-            opacity: 0;
-            transition: 0.2s;
-        }
-        .quiz-dialog.show {
-            visibility: visible;
-            opacity: 1;
-        }
-        .quiz-box {
-            background: var(--surface-solid);
-            border-radius: 2.5rem;
-            padding: 2rem;
-            max-width: 380px;
-            width: 90%;
-            border: 2px solid var(--accent);
-            text-align: center;
-        }
-        .quiz-box p {
-            font-size: 1.2rem;
-            margin-bottom: 1.2rem;
-        }
-        .quiz-box input {
-            width: 100%;
-            padding: 0.8rem 1.2rem;
-            border-radius: 3rem;
-            border: 1px solid var(--border-light);
-            background: var(--input-bg);
-            color: var(--text-primary);
-            margin-bottom: 1.5rem;
-            font-size: 1rem;
-        }
-        .quiz-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-        }
-        .quiz-actions button {
-            padding: 0.6rem 1.8rem;
-            border-radius: 3rem;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-        .quiz-submit {
-            background: var(--accent);
-            color: white;
-        }
     </style>
 </head>
 <body>
-    <!-- 公告弹窗 -->
-    <div class="announce-dialog" id="announceDialog">
-        <div class="announce-box">
-            <p>此内容通过 GitHub 发布，仅供娱乐使用，可随意发言，无违规词，但可通过管理员密码对于内容删除。</p>
-            <div class="signature">—— 吞吞吐吐</div>
-            <button id="confirmAnnounce">确认</button>
-        </div>
-    </div>
-
-    <!-- 问答弹窗 (申请管理员) -->
-    <div class="quiz-dialog" id="quizDialog">
-        <div class="quiz-box">
-            <p>🤔 吞吞吐吐是谁？</p>
-            <input type="text" id="quizAnswer" placeholder="输入你的答案">
-            <div class="quiz-actions">
-                <button class="quiz-submit" id="submitQuiz">提交</button>
-                <button id="cancelQuiz">取消</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="wall-container">
-        <!-- 头部 -->
+    <div class="container">
+        <!-- 头部 + 导航 -->
         <div class="header-card">
             <div class="header-title">
                 上蔡县第二高级中学 <small>SHANGCAI NO.2 HIGH SCHOOL</small>
             </div>
             <div class="header-sub">
-                <span><i class="fas fa-leaf"></i> 匿名·真实班级·树洞</span>
+                <div class="nav-buttons">
+                    <button class="nav-btn active" id="navWallBtn"><i class="fas fa-comment-dots"></i> 校园墙</button>
+                    <button class="nav-btn" id="navProfileBtn"><i class="fas fa-user"></i> 我的主页</button>
+                </div>
                 <div class="theme-toggle" id="themeToggle">
                     <i class="fas fa-moon"></i> 暗色 / <i class="fas fa-sun"></i> 亮色
                 </div>
             </div>
-            <!-- 设置齿轮 -->
-            <div class="settings-icon" id="settingsIcon">
-                <i class="fas fa-cog"></i>
-            </div>
         </div>
 
-        <!-- 主界面内容 (分类、发布、帖子) 默认显示 -->
-        <div id="mainContent">
-            <!-- 分类筛选 -->
+        <!-- 校园墙视图 -->
+        <div id="wallView" class="view active">
             <div class="categories" id="categoryFilter">
                 <span class="cat active" data-cat="all">全部</span>
                 <span class="cat" data-cat="表白墙">💌 表白墙</span>
@@ -776,7 +556,6 @@
                 <span class="cat" data-cat="其他">📌 其他</span>
             </div>
 
-            <!-- 发布卡片 (固定在上方，始终可见) -->
             <div class="post-card">
                 <h3><i class="fas fa-pen-fancy"></i> 发布新帖 · 匿名但留下班级与昵称</h3>
                 <div class="input-row">
@@ -794,291 +573,263 @@
                 <textarea id="postContent" placeholder="说点什么吧…" rows="2"></textarea>
                 <div class="publish-actions">
                     <span style="font-size:0.75rem; color:var(--text-tertiary);" id="charCount">0/500</span>
-                    <button class="btn-primary" id="publishBtn">发布</button>
+                    <button class="btn-primary" id="publishWallBtn">发布</button>
                 </div>
             </div>
 
-            <!-- 帖子列表容器 -->
-            <div id="postsFeed" class="feed">
+            <div id="wallFeed" class="feed">
                 <div class="loading"><i class="fas fa-spinner fa-pulse"></i> 加载帖子中...</div>
             </div>
         </div>
 
-        <!-- 设置面板 (第二页) 初始隐藏 -->
-        <div id="settingsPanel" class="settings-panel">
-            <h2><i class="fas fa-palette"></i> 主题颜色</h2>
-            <div class="color-options">
-                <div class="color-btn" style="background: #f3c14b;" data-color="yellow" title="黄"></div>
-                <div class="color-btn" style="background: #f28b8b;" data-color="pink" title="粉"></div>
-                <div class="color-btn" style="background: #e15554;" data-color="red" title="红"></div>
-                <div class="color-btn" style="background: #4c9ad9;" data-color="blue" title="蓝"></div>
-                <div class="color-btn" style="background: #b98cd9;" data-color="purple" title="淡紫"></div>
+        <!-- 个人主页视图 -->
+        <div id="profileView" class="view">
+            <div class="identity-card">
+                <div class="identity-row">
+                    <div class="device-icon"><i class="fas fa-mobile-alt"></i></div>
+                    <div class="device-info">
+                        <div class="device-model" id="profileDeviceModel">正在识别设备...</div>
+                        <div class="device-fingerprint" id="profileDeviceFingerprint">指纹ID: 加载中...</div>
+                    </div>
+                </div>
             </div>
 
-            <div class="admin-request">
-                <button id="requestAdminBtn"><i class="fas fa-shield-alt"></i> 申请管理员密码</button>
+            <div class="lookup-card">
+                <input type="text" id="lookupFingerprint" placeholder="输入他人指纹ID查看主页">
+                <button id="lookupProfileBtn"><i class="fas fa-search"></i> 查看</button>
             </div>
 
-            <button class="back-btn" id="backToMainBtn"><i class="fas fa-arrow-left"></i> 返回主界面</button>
+            <div id="profileContent"></div>
         </div>
 
-        <div class="footer-note">
-            ⚡ 数据存储在 JSONBin · 管理删除需密码
-        </div>
-    </div>
-
-    <!-- 删除确认弹窗 -->
-    <div class="delete-dialog" id="deleteDialog">
-        <div class="dialog-box">
-            <p><i class="fas fa-trash-alt" style="color:var(--delete-btn);"></i> 输入管理密码以删除</p>
-            <input type="password" id="deletePass" placeholder="密码">
-            <div class="dialog-actions">
-                <button id="cancelDelete">取消</button>
-                <button class="confirm-delete" id="confirmDelete">确认删除</button>
+        <!-- 删除确认弹窗 (共用) -->
+        <div class="dialog" id="deleteDialog">
+            <div class="dialog-box">
+                <p><i class="fas fa-trash-alt" style="color:var(--delete-btn);"></i> 输入管理密码以删除</p>
+                <input type="password" id="deletePass" placeholder="密码">
+                <div class="dialog-actions">
+                    <button id="cancelDelete">取消</button>
+                    <button class="confirm-delete" id="confirmDelete">确认删除</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
         (function() {
-            // ========== 你的 JSONBin 凭据 (已填入) ==========
-            const JSONBIN_KEY = '$2a$10$9z248RcrjjqcUz1byk73Ie5SZ/L0FpjHdBDo6jBPxpwmCKc/qOeFi';  // Master Key
-            const JSONBIN_BIN_ID = '69afdb8bef73d7764563db24';                               // Bin ID
-            const ADMIN_PASS = 'admin123';                    // 管理删除密码 (可修改)
-            // =================================================
+            // ========== JSONBin 凭据 ==========
+            const JSONBIN_KEY = '$2a$10$9z248RcrjjqcUz1byk73Ie5SZ/L0FpjHdBDo6jBPxpwmCKc/qOeFi';
+            const JSONBIN_BIN_ID = '69afdb8bef73d7764563db24';
+            const ADMIN_PASS = 'admin123';
 
-            // 当前帖子数据
-            let allPosts = [];           
-            let currentCategory = 'all';
-            let deleteTargetId = null;    
+            // ---------- 全局状态 ----------
+            let appState = {
+                currentWallCategory: 'all',
+                wallPosts: [],               // 校园墙帖子数组
+                profiles: {},                 // 个人主页数据 { fingerprint: { profile: {...}, posts: [] } }
+                myFingerprint: null,          // 当前设备指纹
+                myDeviceInfo: { model: '', os: '', browser: '' },
+                viewingProfileFingerprint: null,
+                deleteTarget: { type: null, fingerprint: null, postId: null, source: null }  // source 用于区分 'wall' 或 'profile'
+            };
 
-            // DOM元素
-            const feedDiv = document.getElementById('postsFeed');
+            // DOM 元素
+            const wallView = document.getElementById('wallView');
+            const profileView = document.getElementById('profileView');
+            const navWallBtn = document.getElementById('navWallBtn');
+            const navProfileBtn = document.getElementById('navProfileBtn');
             const themeToggle = document.getElementById('themeToggle');
-            const publishBtn = document.getElementById('publishBtn');
+            const wallFeed = document.getElementById('wallFeed');
+            const profileContent = document.getElementById('profileContent');
+            const profileDeviceModel = document.getElementById('profileDeviceModel');
+            const profileDeviceFingerprint = document.getElementById('profileDeviceFingerprint');
+            const lookupFingerprint = document.getElementById('lookupFingerprint');
+            const lookupProfileBtn = document.getElementById('lookupProfileBtn');
+            const deleteDialog = document.getElementById('deleteDialog');
+            const deletePass = document.getElementById('deletePass');
+            const cancelDelete = document.getElementById('cancelDelete');
+            const confirmDel = document.getElementById('confirmDelete');
+
+            // 校园墙特有元素
+            const categorySpans = document.querySelectorAll('#categoryFilter .cat');
             const postClass = document.getElementById('postClass');
             const postNick = document.getElementById('postNick');
             const postCategory = document.getElementById('postCategory');
             const postContent = document.getElementById('postContent');
             const charCount = document.getElementById('charCount');
-            const deleteDialog = document.getElementById('deleteDialog');
-            const deletePass = document.getElementById('deletePass');
-            const cancelDelete = document.getElementById('cancelDelete');
-            const confirmDel = document.getElementById('confirmDelete');
-            const categorySpans = document.querySelectorAll('.cat');
-            const announceDialog = document.getElementById('announceDialog');
-            const confirmAnnounce = document.getElementById('confirmAnnounce');
-            // 设置相关
-            const settingsIcon = document.getElementById('settingsIcon');
-            const mainContent = document.getElementById('mainContent');
-            const settingsPanel = document.getElementById('settingsPanel');
-            const backToMainBtn = document.getElementById('backToMainBtn');
-            const colorBtns = document.querySelectorAll('.color-btn');
-            const requestAdminBtn = document.getElementById('requestAdminBtn');
-            const quizDialog = document.getElementById('quizDialog');
-            const quizAnswer = document.getElementById('quizAnswer');
-            const submitQuiz = document.getElementById('submitQuiz');
-            const cancelQuiz = document.getElementById('cancelQuiz');
+            const publishWallBtn = document.getElementById('publishWallBtn');
 
-            // 显示公告弹窗 (每次进入页面都显示)
-            announceDialog.classList.add('show');
-
-            confirmAnnounce.addEventListener('click', () => {
-                announceDialog.classList.remove('show');
-            });
-
-            // 主题切换 (亮色/暗色)
-            themeToggle.addEventListener('click', () => {
-                document.body.classList.toggle('dark');
-                const icon = themeToggle.querySelector('i');
-                if (document.body.classList.contains('dark')) {
-                    icon.className = 'fas fa-sun';
-                } else {
-                    icon.className = 'fas fa-moon';
-                }
-            });
-
-            // 字数统计
-            postContent.addEventListener('input', () => {
-                charCount.textContent = postContent.value.length + '/500';
-            });
-
-            // 分类点击
-            categorySpans.forEach(span => {
-                span.addEventListener('click', () => {
-                    categorySpans.forEach(s => s.classList.remove('active'));
-                    span.classList.add('active');
-                    currentCategory = span.dataset.cat;
-                    renderPosts();
+            // ---------- 初始化 ----------
+            (async function init() {
+                themeToggle.addEventListener('click', () => {
+                    document.body.classList.toggle('dark');
+                    const icon = themeToggle.querySelector('i');
+                    icon.className = document.body.classList.contains('dark') ? 'fas fa-sun' : 'fas fa-moon';
                 });
-            });
 
-            // 设置图标点击：显示设置面板，隐藏主内容
-            settingsIcon.addEventListener('click', () => {
-                mainContent.style.display = 'none';
-                settingsPanel.style.display = 'block';
-            });
+                // 获取设备指纹和设备信息
+                const fp = await FingerprintJS.load();
+                const result = await fp.get();
+                appState.myFingerprint = result.visitorId;
 
-            // 返回主界面
-            backToMainBtn.addEventListener('click', () => {
-                settingsPanel.style.display = 'none';
-                mainContent.style.display = 'block';
-            });
-
-            // 主题色切换 (修改CSS变量)
-            colorBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    // 移除所有active类
-                    colorBtns.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    const color = btn.dataset.color;
-                    let accentColor, accentSoft, tagActive;
-                    switch(color) {
-                        case 'yellow':
-                            accentColor = '#d9a404';
-                            accentSoft = '#f9e6b3';
-                            tagActive = '#d9a404';
-                            break;
-                        case 'pink':
-                            accentColor = '#d96c8c';
-                            accentSoft = '#fad4e1';
-                            tagActive = '#d96c8c';
-                            break;
-                        case 'red':
-                            accentColor = '#c0392b';
-                            accentSoft = '#f5bcb6';
-                            tagActive = '#c0392b';
-                            break;
-                        case 'blue':
-                            accentColor = '#2980b9';
-                            accentSoft = '#c6e2ff';
-                            tagActive = '#2980b9';
-                            break;
-                        case 'purple':
-                            accentColor = '#8e6bc4';
-                            accentSoft = '#e3d5f5';
-                            tagActive = '#8e6bc4';
-                            break;
-                        default: return;
-                    }
-                    // 修改根变量 (只改亮色模式，暗色模式保留原有)
-                    document.documentElement.style.setProperty('--accent', accentColor);
-                    document.documentElement.style.setProperty('--accent-soft', accentSoft);
-                    document.documentElement.style.setProperty('--tag-active', tagActive);
-                    // 同时修改按钮阴影等 (可选)
-                });
-            });
-
-            // 申请管理员：弹出问答框
-            requestAdminBtn.addEventListener('click', () => {
-                quizDialog.classList.add('show');
-                quizAnswer.value = '';
-            });
-
-            // 取消问答
-            cancelQuiz.addEventListener('click', () => {
-                quizDialog.classList.remove('show');
-            });
-
-            // 提交答案
-            submitQuiz.addEventListener('click', () => {
-                const answer = quizAnswer.value.trim();
-                if (answer === '47') {
-                    alert('✅ 管理员密码是：admin123');
-                    quizDialog.classList.remove('show');
-                } else {
-                    alert('❌ 答案错误，再试试吧');
-                }
-            });
-
-            // JSONBin 请求头
-            function getHeaders() {
-                return {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': JSONBIN_KEY,
-                    'X-Bin-Meta': false,
+                const parser = new UAParser();
+                const ua = parser.getResult();
+                appState.myDeviceInfo = {
+                    model: ua.device.model || '未知设备',
+                    os: ua.os.name || '未知系统',
+                    browser: ua.browser.name || '未知浏览器'
                 };
-            }
+                profileDeviceModel.textContent = `${appState.myDeviceInfo.model} · ${appState.myDeviceInfo.os} · ${appState.myDeviceInfo.browser}`;
+                profileDeviceFingerprint.textContent = `指纹ID: ${appState.myFingerprint}`;
 
-            // 获取所有帖子
-            async function fetchPosts() {
-                if (!JSONBIN_BIN_ID || JSONBIN_BIN_ID === 'YOUR_BIN_ID') {
-                    feedDiv.innerHTML = '<div class="loading" style="color:red;">请先在代码中填写正确的JSONBin Bin ID</div>';
-                    return;
+                await loadData();
+
+                if (!appState.profiles[appState.myFingerprint]) {
+                    appState.profiles[appState.myFingerprint] = {
+                        profile: { nickname: `访客${appState.myFingerprint.slice(-4)}`, bio: '' },
+                        posts: []
+                    };
                 }
-                try {
-                    feedDiv.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> 加载中...</div>';
-                    const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
-                        headers: getHeaders()
+                appState.viewingProfileFingerprint = appState.myFingerprint;
+
+                renderWallPosts();
+                renderProfile(appState.viewingProfileFingerprint);
+
+                navWallBtn.addEventListener('click', () => setActiveView('wall'));
+                navProfileBtn.addEventListener('click', () => setActiveView('profile'));
+
+                categorySpans.forEach(span => {
+                    span.addEventListener('click', () => {
+                        categorySpans.forEach(s => s.classList.remove('active'));
+                        span.classList.add('active');
+                        appState.currentWallCategory = span.dataset.cat;
+                        renderWallPosts();
                     });
-                    if (!response.ok) throw new Error('加载失败，请检查Key和Bin ID');
-                    const data = await response.json();
-                    if (data && Array.isArray(data.posts)) {
-                        allPosts = data.posts;
-                    } else if (Array.isArray(data)) {
-                        allPosts = data;
-                    } else {
-                        allPosts = [];
+                });
+
+                publishWallBtn.addEventListener('click', publishWallPost);
+                postContent.addEventListener('input', () => {
+                    charCount.textContent = postContent.value.length + '/500';
+                });
+
+                lookupProfileBtn.addEventListener('click', async () => {
+                    const fp = lookupFingerprint.value.trim();
+                    if (!fp) return alert('请输入指纹ID');
+                    await loadData();
+                    if (!appState.profiles[fp]) {
+                        if (confirm('该指纹ID不存在，是否创建新主页？')) {
+                            appState.profiles[fp] = {
+                                profile: { nickname: `访客${fp.slice(-4)}`, bio: '' },
+                                posts: []
+                            };
+                            await saveData();
+                        } else {
+                            return;
+                        }
                     }
-                    renderPosts();
-                } catch (e) {
-                    feedDiv.innerHTML = `<div class="loading" style="color:red;">加载失败: ${e.message}</div>`;
-                }
-            }
+                    appState.viewingProfileFingerprint = fp;
+                    renderProfile(fp);
+                    setActiveView('profile');
+                });
 
-            // 保存帖子到JSONBin (全量更新)
-            async function savePosts() {
-                if (!JSONBIN_BIN_ID || JSONBIN_BIN_ID === 'YOUR_BIN_ID') {
-                    alert('请先在代码中填写正确的JSONBin Bin ID');
-                    return;
-                }
+                cancelDelete.addEventListener('click', () => {
+                    deleteDialog.classList.remove('show');
+                    appState.deleteTarget = { type: null, fingerprint: null, postId: null, source: null };
+                });
+
+                confirmDel.addEventListener('click', async () => {
+                    const inputPass = deletePass.value.trim();
+                    if (inputPass !== ADMIN_PASS) {
+                        alert('密码错误');
+                        return;
+                    }
+                    const target = appState.deleteTarget;
+                    if (target.source === 'wall') {
+                        appState.wallPosts = appState.wallPosts.filter(p => p.id !== target.postId);
+                        await saveData();
+                        renderWallPosts();
+                        if (appState.viewingProfileFingerprint) {
+                            renderProfile(appState.viewingProfileFingerprint);
+                        }
+                    } else if (target.source === 'profile') {
+                        const userPosts = appState.profiles[target.fingerprint]?.posts;
+                        if (userPosts) {
+                            appState.profiles[target.fingerprint].posts = userPosts.filter(p => p.id !== target.postId);
+                            await saveData();
+                            if (appState.viewingProfileFingerprint === target.fingerprint) {
+                                renderProfile(target.fingerprint);
+                            }
+                        }
+                    }
+                    deleteDialog.classList.remove('show');
+                    appState.deleteTarget = { type: null, fingerprint: null, postId: null, source: null };
+                });
+            })();
+
+            // ---------- 数据操作 ----------
+            async function loadData() {
                 try {
-                    const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
-                        method: 'PUT',
-                        headers: getHeaders(),
-                        body: JSON.stringify({ posts: allPosts })
+                    const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
+                        headers: { 'X-Master-Key': JSONBIN_KEY, 'X-Bin-Meta': false }
                     });
-                    if (!response.ok) throw new Error('保存失败');
-                    renderPosts(); // 刷新显示
+                    if (!response.ok) throw new Error('加载失败');
+                    const data = await response.json();
+                    appState.wallPosts = Array.isArray(data.posts) ? data.posts : [];
+                    appState.profiles = data.profiles || {};
                 } catch (e) {
-                    alert('保存到JSONBin失败: ' + e.message);
+                    console.error('加载失败', e);
+                    appState.wallPosts = [];
+                    appState.profiles = {};
                 }
             }
 
-            // 渲染帖子 (根据分类)
-            function renderPosts() {
-                if (!allPosts.length) {
-                    feedDiv.innerHTML = '<div class="loading">✨ 还没有帖子，来发布第一条吧</div>';
-                    return;
+            async function saveData() {
+                try {
+                    await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Master-Key': JSONBIN_KEY
+                        },
+                        body: JSON.stringify({
+                            posts: appState.wallPosts,
+                            profiles: appState.profiles
+                        })
+                    });
+                } catch (e) {
+                    alert('保存失败: ' + e.message);
                 }
+            }
 
-                // 排序：按时间倒序
-                const sorted = [...allPosts].sort((a, b) => (b.time || '').localeCompare(a.time || ''));
+            // ---------- 校园墙渲染 (增加指纹显示) ----------
+            function renderWallPosts() {
+                const filtered = appState.currentWallCategory === 'all'
+                    ? appState.wallPosts
+                    : appState.wallPosts.filter(p => p.category === appState.currentWallCategory);
+                const sorted = [...filtered].sort((a,b) => (b.time || '').localeCompare(a.time || ''));
 
-                const filtered = currentCategory === 'all' ? sorted : sorted.filter(p => p.category === currentCategory);
-
-                if (filtered.length === 0) {
-                    feedDiv.innerHTML = '<div class="loading">📭 这个分类暂时没有帖子</div>';
+                if (sorted.length === 0) {
+                    wallFeed.innerHTML = '<div class="loading">✨ 还没有帖子，来发布第一条吧</div>';
                     return;
                 }
 
                 let html = '';
-                filtered.forEach(post => {
+                sorted.forEach(post => {
                     const comments = post.comments || [];
-                    const commentCount = comments.length;
-
+                    const fingerprintShort = post.fingerprint ? post.fingerprint.slice(-8) : '未知';
                     html += `
-                        <div class="feed-item" data-id="${post.id}">
+                        <div class="feed-item" data-post-id="${post.id}">
                             <div class="item-header">
-                                <span class="badge-class">${escapeHtml(post.class || '未填班级')}</span>
-                                <span class="badge-nick">${escapeHtml(post.nickname || '匿名')}</span>
+                                <span class="badge-class" data-fp="${escapeHtml(post.fingerprint || '')}">${escapeHtml(post.class || '未填班级')}</span>
+                                <span class="badge-nick" data-fp="${escapeHtml(post.fingerprint || '')}">${escapeHtml(post.nickname || '匿名')}</span>
                                 <span class="badge-cat">${escapeHtml(post.category || '其他')}</span>
                                 <span class="item-time">${escapeHtml(post.time || '')}</span>
                             </div>
                             <div class="item-content">${escapeHtml(post.content || '').replace(/\n/g, '<br>')}</div>
                             <div class="item-stats">
                                 <button class="stat-btn like-btn" data-id="${post.id}"><i class="fa-regular fa-heart"></i> ${post.likes || 0}</button>
-                                <button class="stat-btn comment-toggle" data-id="${post.id}"><i class="fa-regular fa-comment"></i> ${commentCount}</button>
+                                <button class="stat-btn comment-toggle" data-id="${post.id}"><i class="fa-regular fa-comment"></i> ${comments.length}</button>
+                                <span class="post-fingerprint" title="发布者指纹: ${escapeHtml(post.fingerprint || '')}"><i class="fas fa-fingerprint"></i> ${fingerprintShort}</span>
                                 <button class="delete-btn" data-id="${post.id}"><i class="fa-regular fa-trash-can"></i> 删除</button>
                             </div>
                             <div class="comments-section" id="comments-${post.id}" style="display: none;">
@@ -1100,22 +851,26 @@
                         </div>
                     `;
                 });
-                feedDiv.innerHTML = html;
+                wallFeed.innerHTML = html;
 
-                // 绑定点赞、评论显示、删除、添加评论事件
-                document.querySelectorAll('.like-btn').forEach(btn => {
+                // 事件绑定 (点赞、评论、删除、点击作者)
+                document.querySelectorAll('#wallView .like-btn').forEach(btn => {
                     btn.addEventListener('click', async (e) => {
                         e.stopPropagation();
                         const id = btn.dataset.id;
-                        const post = allPosts.find(p => p.id === id);
+                        const post = appState.wallPosts.find(p => p.id === id);
                         if (post) {
                             post.likes = (post.likes || 0) + 1;
-                            await savePosts();
+                            await saveData();
+                            renderWallPosts();
+                            if (appState.viewingProfileFingerprint) {
+                                renderProfile(appState.viewingProfileFingerprint);
+                            }
                         }
                     });
                 });
 
-                document.querySelectorAll('.comment-toggle').forEach(btn => {
+                document.querySelectorAll('#wallView .comment-toggle').forEach(btn => {
                     btn.addEventListener('click', () => {
                         const id = btn.dataset.id;
                         const section = document.getElementById(`comments-${id}`);
@@ -1123,16 +878,7 @@
                     });
                 });
 
-                document.querySelectorAll('.delete-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        deleteTargetId = btn.dataset.id;
-                        deletePass.value = '';
-                        deleteDialog.classList.add('show');
-                    });
-                });
-
-                document.querySelectorAll('.add-comment-btn').forEach(btn => {
+                document.querySelectorAll('#wallView .add-comment-btn').forEach(btn => {
                     btn.addEventListener('click', async () => {
                         const id = btn.dataset.id;
                         const nickInput = document.getElementById(`nick-${id}`);
@@ -1140,7 +886,7 @@
                         const nick = nickInput.value.trim() || '匿名';
                         const text = textInput.value.trim();
                         if (!text) return;
-                        const post = allPosts.find(p => p.id === id);
+                        const post = appState.wallPosts.find(p => p.id === id);
                         if (post) {
                             if (!post.comments) post.comments = [];
                             post.comments.push({
@@ -1150,36 +896,247 @@
                             });
                             textInput.value = '';
                             nickInput.value = '';
-                            await savePosts();
+                            await saveData();
+                            renderWallPosts();
+                            if (appState.viewingProfileFingerprint) {
+                                renderProfile(appState.viewingProfileFingerprint);
+                            }
                         }
+                    });
+                });
+
+                document.querySelectorAll('#wallView .delete-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const id = btn.dataset.id;
+                        appState.deleteTarget = { source: 'wall', fingerprint: null, postId: id };
+                        deletePass.value = '';
+                        deleteDialog.classList.add('show');
+                    });
+                });
+
+                document.querySelectorAll('#wallView .badge-class, #wallView .badge-nick').forEach(el => {
+                    el.addEventListener('click', async () => {
+                        const fp = el.dataset.fp;
+                        if (!fp) return;
+                        await loadData();
+                        if (!appState.profiles[fp]) {
+                            appState.profiles[fp] = {
+                                profile: { nickname: `访客${fp.slice(-4)}`, bio: '' },
+                                posts: []
+                            };
+                            await saveData();
+                        }
+                        appState.viewingProfileFingerprint = fp;
+                        renderProfile(fp);
+                        setActiveView('profile');
                     });
                 });
             }
 
-            // 简单防XSS
-            function escapeHtml(unsafe) {
-                if (!unsafe) return unsafe;
-                return unsafe.replace(/[&<>"]/g, function(m) {
-                    if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; if(m === '"') return '&quot;';
-                    return m;
+            // ---------- 个人主页渲染 (合并校园墙帖子) ----------
+            function renderProfile(fingerprint) {
+                const userData = appState.profiles[fingerprint];
+                if (!userData) {
+                    profileContent.innerHTML = '<div class="loading">用户不存在</div>';
+                    return;
+                }
+                const profile = userData.profile;
+                const profilePosts = userData.posts || [];
+
+                // 获取该用户在校园墙发布的帖子
+                const wallPostsForUser = appState.wallPosts
+                    .filter(p => p.fingerprint === fingerprint)
+                    .map(p => ({
+                        id: p.id,
+                        content: p.content,
+                        time: p.time,
+                        likes: p.likes || 0,
+                        source: 'wall',
+                        extra: { class: p.class, nickname: p.nickname, category: p.category } // 保留额外信息供显示
+                    }));
+
+                // 标记主页动态的来源
+                const profilePostsMarked = profilePosts.map(p => ({
+                    ...p,
+                    source: 'profile'
+                }));
+
+                // 合并并按时间倒序
+                const allPosts = [...wallPostsForUser, ...profilePostsMarked].sort((a, b) => (b.time || '').localeCompare(a.time || ''));
+
+                const isMine = (fingerprint === appState.myFingerprint);
+
+                let html = `
+                    <div class="profile-card">
+                        <div class="profile-field">
+                            <label>昵称</label>
+                            <input type="text" id="profileNick" value="${escapeHtml(profile.nickname || '')}" placeholder="你的昵称" ${isMine ? '' : 'disabled'}>
+                        </div>
+                        <div class="profile-field">
+                            <label>个人简介</label>
+                            <textarea id="profileBio" placeholder="介绍一下自己..." ${isMine ? '' : 'disabled'}>${escapeHtml(profile.bio || '')}</textarea>
+                        </div>
+                        ${isMine ? '<button class="save-btn" id="saveProfileBtn">保存资料</button>' : ''}
+                    </div>
+                `;
+
+                if (isMine) {
+                    html += `
+                        <div class="post-card">
+                            <h3><i class="fas fa-pen-fancy"></i> 发布动态 (仅主页可见)</h3>
+                            <textarea class="post-input" id="profilePostContent" placeholder="说点什么..." rows="2"></textarea>
+                            <div class="post-actions">
+                                <button class="save-btn" id="publishProfileBtn">发布</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                html += `<div class="feed" id="profilePostsFeed">`;
+                if (allPosts.length === 0) {
+                    html += '<div class="loading">还没有任何内容</div>';
+                } else {
+                    allPosts.forEach(post => {
+                        if (post.source === 'wall') {
+                            // 校园墙帖子显示样式
+                            html += `
+                                <div class="feed-item" data-post-id="${post.id}" data-source="wall">
+                                    <div class="item-header">
+                                        <span class="item-author">${escapeHtml(post.extra.nickname)} <span class="source-tag">校园墙</span></span>
+                                        <span class="item-time">${escapeHtml(post.time || '')}</span>
+                                    </div>
+                                    <div class="item-content">${escapeHtml(post.content || '').replace(/\n/g, '<br>')}</div>
+                                    <div class="item-footer">
+                                        <button class="stat-btn like-profile-btn" data-post-id="${post.id}" data-source="wall"><i class="fa-regular fa-heart"></i> ${post.likes}</button>
+                                        ${isMine ? `
+                                            <button class="delete-post" data-post-id="${post.id}" data-source="wall"><i class="fa-regular fa-trash-can"></i> 删除</button>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            // 主页动态
+                            html += `
+                                <div class="feed-item" data-post-id="${post.id}" data-source="profile">
+                                    <div class="item-header">
+                                        <span class="item-author">${escapeHtml(profile.nickname || '匿名')} <span class="source-tag">主页动态</span></span>
+                                        <span class="item-time">${escapeHtml(post.time || '')}</span>
+                                    </div>
+                                    <div class="item-content">${escapeHtml(post.content || '').replace(/\n/g, '<br>')}</div>
+                                    <div class="item-footer">
+                                        <button class="stat-btn like-profile-btn" data-post-id="${post.id}" data-source="profile"><i class="fa-regular fa-heart"></i> ${post.likes}</button>
+                                        ${isMine ? `
+                                            <button class="delete-post" data-post-id="${post.id}" data-source="profile"><i class="fa-regular fa-trash-can"></i> 删除</button>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    });
+                }
+                html += '</div>';
+
+                profileContent.innerHTML = html;
+
+                // 保存资料
+                if (isMine) {
+                    document.getElementById('saveProfileBtn')?.addEventListener('click', async () => {
+                        const nick = document.getElementById('profileNick').value.trim() || '匿名';
+                        const bio = document.getElementById('profileBio').value.trim() || '';
+                        appState.profiles[fingerprint].profile.nickname = nick;
+                        appState.profiles[fingerprint].profile.bio = bio;
+                        await saveData();
+                        renderProfile(fingerprint);
+                    });
+
+                    document.getElementById('publishProfileBtn')?.addEventListener('click', async () => {
+                        const content = document.getElementById('profilePostContent').value.trim();
+                        if (!content) return alert('内容不能为空');
+                        const newPost = {
+                            id: Date.now() + '-' + Math.random().toString(36).substr(2, 6),
+                            content: content,
+                            time: new Date().toLocaleString('zh-CN', { hour12: false }),
+                            likes: 0
+                        };
+                        appState.profiles[fingerprint].posts.unshift(newPost);
+                        await saveData();
+                        renderProfile(fingerprint);
+                    });
+                }
+
+                // 点赞事件 (区分来源)
+                document.querySelectorAll('#profilePostsFeed .like-profile-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        const postId = btn.dataset.postId;
+                        const source = btn.dataset.source;
+                        if (source === 'wall') {
+                            const post = appState.wallPosts.find(p => p.id === postId);
+                            if (post) {
+                                post.likes = (post.likes || 0) + 1;
+                                await saveData();
+                                renderProfile(fingerprint);
+                                renderWallPosts(); // 同时更新校园墙视图
+                            }
+                        } else {
+                            const post = appState.profiles[fingerprint].posts.find(p => p.id === postId);
+                            if (post) {
+                                post.likes = (post.likes || 0) + 1;
+                                await saveData();
+                                renderProfile(fingerprint);
+                            }
+                        }
+                    });
+                });
+
+                // 删除事件
+                document.querySelectorAll('#profilePostsFeed .delete-post').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const postId = btn.dataset.postId;
+                        const source = btn.dataset.source;
+                        if (source === 'wall') {
+                            appState.deleteTarget = { source: 'wall', fingerprint: null, postId: postId };
+                        } else {
+                            appState.deleteTarget = { source: 'profile', fingerprint: fingerprint, postId: postId };
+                        }
+                        deletePass.value = '';
+                        deleteDialog.classList.add('show');
+                    });
                 });
             }
 
-            // 发布新帖 (带按钮动画)
-            publishBtn.addEventListener('click', async () => {
+            // 切换视图
+            function setActiveView(view) {
+                if (view === 'wall') {
+                    wallView.classList.add('active');
+                    profileView.classList.remove('active');
+                    navWallBtn.classList.add('active');
+                    navProfileBtn.classList.remove('active');
+                    renderWallPosts(); // 刷新
+                } else {
+                    wallView.classList.remove('active');
+                    profileView.classList.add('active');
+                    navWallBtn.classList.remove('active');
+                    navProfileBtn.classList.add('active');
+                    // 如果当前查看的个人主页指纹不是自己的，可能需要在进入时重置为自己？这里保持原样
+                    if (appState.viewingProfileFingerprint !== appState.myFingerprint) {
+                        // 可以选择跳回自己主页或保持，这里保持
+                    }
+                    renderProfile(appState.viewingProfileFingerprint);
+                }
+            }
+
+            // 校园墙发布
+            async function publishWallPost() {
                 const className = postClass.value.trim() || '未填班级';
                 const nick = postNick.value.trim() || '匿名';
                 const category = postCategory.value;
                 const content = postContent.value.trim();
                 if (!content) return alert('内容不能为空');
 
-                // 按钮加载状态
-                const originalText = publishBtn.innerHTML;
-                publishBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> 发布中...';
-                publishBtn.disabled = true;
-
                 const newPost = {
                     id: Date.now() + '-' + Math.random().toString(36).substr(2, 6),
+                    fingerprint: appState.myFingerprint,
                     class: className,
                     nickname: nick,
                     category: category,
@@ -1188,47 +1145,25 @@
                     likes: 0,
                     comments: []
                 };
-                allPosts.unshift(newPost);
-                try {
-                    await savePosts();  // 保存并重新渲染
-                    postContent.value = '';
-                    charCount.textContent = '0/500';
-                    postClass.value = '';
-                    postNick.value = '';
-                } catch (e) {
-                    alert('发布失败');
-                } finally {
-                    // 恢复按钮
-                    publishBtn.innerHTML = originalText;
-                    publishBtn.disabled = false;
+                appState.wallPosts.unshift(newPost);
+                await saveData();
+                postContent.value = '';
+                charCount.textContent = '0/500';
+                postClass.value = '';
+                postNick.value = '';
+                renderWallPosts();
+                // 如果当前在个人主页且查看的是自己，刷新个人主页
+                if (profileView.classList.contains('active') && appState.viewingProfileFingerprint === appState.myFingerprint) {
+                    renderProfile(appState.myFingerprint);
                 }
-            });
+            }
 
-            // 删除确认
-            cancelDelete.addEventListener('click', () => {
-                deleteDialog.classList.remove('show');
-                deleteTargetId = null;
-            });
-
-            confirmDel.addEventListener('click', async () => {
-                const inputPass = deletePass.value.trim();
-                if (inputPass !== ADMIN_PASS) {
-                    alert('密码错误');
-                    return;
-                }
-                if (deleteTargetId) {
-                    allPosts = allPosts.filter(p => p.id !== deleteTargetId);
-                    await savePosts();
-                    deleteDialog.classList.remove('show');
-                    deleteTargetId = null;
-                }
-            });
-
-            // 初始化获取数据
-            if (JSONBIN_BIN_ID && JSONBIN_BIN_ID !== 'YOUR_BIN_ID') {
-                fetchPosts();
-            } else {
-                feedDiv.innerHTML = '<div class="loading">🔧 请先在代码开头填写你的JSONBin Bin ID和Key</div>';
+            function escapeHtml(unsafe) {
+                if (!unsafe) return unsafe;
+                return unsafe.replace(/[&<>"]/g, function(m) {
+                    if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; if(m === '"') return '&quot;';
+                    return m;
+                });
             }
         })();
     </script>
