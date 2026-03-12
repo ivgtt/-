@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>上蔡二高 · 校园墙 · 个人主页</title>
+    <title>上蔡二高 · 校园墙 </title>
     <!-- 系统字体，无外部依赖 -->
     <style>
         * {
@@ -311,14 +311,17 @@
         }
         .btn-primary:active { transform: translateY(4px); box-shadow: 0 2px 0 #1a3349; }
 
+        /* 卡片列表容器 - 使用contain优化性能 */
         .feed {
             display: flex;
             flex-direction: column;
             position: relative;
             padding: 1rem 0 20vh;
             min-height: 70vh;
+            contain: content;
         }
 
+        /* 卡片基础样式 - 不设置z-index，保持自然堆叠顺序 */
         .feed-item {
             position: relative;
             background: var(--surface-solid);
@@ -326,25 +329,33 @@
             padding: 1.5rem 1.5rem 1rem;
             border: 1px solid var(--border-light);
             box-shadow: var(--card-shadow);
-            transition: all 0.2s cubic-bezier(0.23, 1, 0.32, 1);
-            will-change: transform, opacity, margin, filter, z-index;
+            transition: transform 0.2s cubic-bezier(0.23, 1, 0.32, 1), 
+                        margin-bottom 0.2s ease,
+                        opacity 0.2s ease,
+                        filter 0.2s ease,
+                        background 0.3s;
+            will-change: transform, margin-bottom, opacity, filter;
             transform-origin: center;
-            margin-bottom: -30px;
+            margin-bottom: -30px; /* 基础重叠，会被JS动态覆盖 */
             width: 100%;
             backdrop-filter: blur(2px);
             opacity: 0.9;
             filter: blur(0.3px);
+            /* 硬件加速 */
+            transform: translateZ(0);
+            backface-visibility: hidden;
         }
 
+        /* 焦点卡片样式 - 只改变视觉属性，不改变堆叠顺序 */
         .feed-item.focused {
             opacity: 1;
             filter: blur(0px);
-            transform: scale(1.02);
             box-shadow: 0 30px 50px -15px rgba(0,0,0,0.3);
             border: 1px solid var(--accent);
-            z-index: 100 !important;
+            /* 注意：没有设置z-index，保持自然堆叠 */
         }
 
+        /* 非焦点卡片内容截断 */
         .feed-item:not(.focused) .item-content {
             max-height: 4.5em;
             overflow: hidden;
@@ -412,7 +423,9 @@
             color: var(--text-tertiary);
             font-size: 0.85rem;
             cursor: pointer;
+            transition: transform 0.1s;
         }
+        .stat-btn:active { transform: scale(0.95); }
         .delete-btn {
             margin-left: auto;
             background: none;
@@ -528,7 +541,7 @@
         <!-- 侧边栏遮罩 -->
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-        <!-- 侧边栏 (已删除公告管理入口) -->
+        <!-- 侧边栏 -->
         <div class="sidebar" id="sidebar">
             <i class="fas fa-times sidebar-close" id="closeSidebar"></i>
             <div class="sidebar-header">
@@ -544,13 +557,13 @@
                 <div class="sidebar-item" id="sidebarMagicBtn"><i class="fas fa-magic"></i><span>神奇换色</span></div>
             </div>
             <div class="fun-section">
-                <div class="fun-title"><i class="fas fa-grin-squint"></i> 校园趣味角</div>
-                <div class="fun-content" id="funContent">点击刷新获取今日份快乐~</div>
+                <div class="fun-title"><i class="fas fa-grin-squint"></i> 喵呜T^T</div>
+                <div class="fun-content" id="funContent">点击刷新获取今日份快乐喵(>^ω^<)~</div>
                 <div class="fun-refresh"><i class="fas fa-sync-alt" id="refreshFun"></i></div>
             </div>
         </div>
 
-        <!-- 公告栏 (仍可显示，但无管理入口) -->
+        <!-- 公告栏 -->
         <div id="announcementBar" class="announcement-bar" style="display: none;">
             <i class="fas fa-bullhorn"></i>
             <span class="announcement-text" id="announcementText"></span>
@@ -559,7 +572,7 @@
         <!-- 一言卡片 -->
         <div class="hitokoto-card" id="hitokotoContainer">
             <i class="fas fa-quote-right"></i>
-            <span class="hitokoto-text" id="hitokotoText">加载一句心里话...</span>
+            <span class="hitokoto-text" id="hitokotoText">加载一句一言...</span>
         </div>
 
         <!-- 校园墙视图 -->
@@ -596,7 +609,7 @@
             </div>
 
             <div id="wallFeed" class="feed">
-                <div class="loading"><i class="fas fa-spinner fa-pulse"></i> 加载帖子中...</div>
+                <div class="loading"><i class="fas fa-spinner fa-pulse"></i> 等下喵(* >ω<）...</div>
             </div>
         </div>
 
@@ -618,7 +631,7 @@
             <div id="profileContent"></div>
         </div>
 
-        <!-- 删除确认弹窗 (仅保留删除) -->
+        <!-- 删除确认弹窗 -->
         <div class="dialog" id="deleteDialog">
             <div class="dialog-box">
                 <p><i class="fas fa-trash-alt" style="color:var(--delete-btn);"></i> 输入管理密码以删除</p>
@@ -639,36 +652,70 @@
             const ADMIN_PASS = 'admin123';
             const STORAGE_KEY = 'sgep_backup';
             const STORAGE_KEY_LAST = 'sgep_last_good';
+            const ID_CACHE_KEY = 'stable_device_id_cache';
 
-            // ========== 基于手机分辨率+型号生成稳定的设备签名 ==========
-            function generateDeviceSignature() {
+            // ========== 基于 Web Crypto + 硬件信息生成稳定5位ID ==========
+            async function generateStableDeviceId() {
+                // 1. 先检查本地缓存 (优先使用，确保稳定性)
+                try {
+                    const cached = localStorage.getItem(ID_CACHE_KEY);
+                    if (cached) {
+                        const { id, timestamp } = JSON.parse(cached);
+                        // 缓存有效期30天
+                        if (Date.now() - timestamp < 30 * 24 * 60 * 60 * 1000) {
+                            return id;
+                        }
+                    }
+                } catch (e) {}
+
+                // 2. 收集稳定的硬件和系统信息
                 const parser = new UAParser();
                 const ua = parser.getResult();
-                // 获取屏幕分辨率
-                const width = window.screen.width;
-                const height = window.screen.height;
-                // 获取设备型号 (可能为空)
-                const model = ua.device.model || ua.os.name + ' ' + ua.browser.name;
-                // 组合成特征字符串
-                const raw = `${width}x${height}-${model}`;
-                // 简单的哈希函数 (Java String.hashCode 风格)
-                let hash = 0;
-                for (let i = 0; i < raw.length; i++) {
-                    const char = raw.charCodeAt(i);
-                    hash = ((hash << 5) - hash) + char;
-                    hash |= 0; // 转为32位整数
+                
+                // 核心硬件信息 (非常稳定)
+                const features = [
+                    navigator.hardwareConcurrency || 'unknown',           // CPU核心数
+                    navigator.deviceMemory || 'unknown',                  // 设备内存(GB)
+                    screen.colorDepth || 'unknown',                       // 色深
+                    screen.width,                                          // 屏幕宽度
+                    screen.height,                                         // 屏幕高度
+                    navigator.language || 'unknown',                      // 系统语言
+                    ua.os.name || 'unknown',                              // 操作系统
+                    ua.device.model || ua.os.name || 'unknown',           // 设备型号
+                    navigator.platform || 'unknown'                       // 平台
+                ].join('|');
+
+                // 3. 使用 Web Crypto API 生成 SHA-256 哈希
+                const encoder = new TextEncoder();
+                const data = encoder.encode(features);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+                const hashArray = new Uint8Array(hashBuffer);
+                
+                // 4. 转换为5位数字 (10000-99999)
+                // 取前4个字节(32位)转成整数
+                let intVal = 0;
+                for (let i = 0; i < 4; i++) {
+                    intVal = (intVal << 8) + hashArray[i];
                 }
-                return Math.abs(hash).toString(36) + '-' + Math.abs(hash % 10000); // 返回一个混合字符串确保唯一，但我们只需用它作为键
-                // 实际上我们只需要一个唯一字符串，可以用原始组合
-                // 为了简化，直接返回组合字符串，因为已经足够唯一
-                return raw; 
+                // 取绝对值并映射到目标范围
+                const fiveDigitId = 10000 + (Math.abs(intVal) % 90000);
+                
+                // 5. 缓存到本地
+                try {
+                    localStorage.setItem(ID_CACHE_KEY, JSON.stringify({
+                        id: fiveDigitId,
+                        timestamp: Date.now()
+                    }));
+                } catch (e) {}
+                
+                return fiveDigitId;
             }
 
-            // ========== 5位数字ID生成器 (基于设备签名) ==========
+            // ========== 5位数字ID生成器 (使用硬件特征) ==========
             class ShortIdGenerator {
                 constructor() {
-                    this.idMap = {};      // 设备签名 -> 5位数字
-                    this.reverseMap = {};  // 5位数字 -> 设备签名
+                    this.idMap = {};      // 设备特征 -> 5位数字
+                    this.reverseMap = {};  // 5位数字 -> 设备特征
                     this.usedIds = new Set();
                 }
 
@@ -676,69 +723,62 @@
                     this.idMap = {};
                     this.reverseMap = {};
                     this.usedIds.clear();
-                    for (let signature in profiles) {
-                        const profile = profiles[signature];
+                    for (let fingerprint in profiles) {
+                        const profile = profiles[fingerprint];
                         if (profile && profile.shortId) {
                             const shortId = profile.shortId;
-                            this.idMap[signature] = shortId;
-                            this.reverseMap[shortId] = signature;
+                            this.idMap[fingerprint] = shortId;
+                            this.reverseMap[shortId] = fingerprint;
                             this.usedIds.add(shortId);
                         }
                     }
                 }
 
-                // 从 localStorage 加载映射
                 loadFromLocal() {
                     try {
                         const map = JSON.parse(localStorage.getItem('shortIdMap') || '{}');
-                        for (let signature in map) {
-                            const shortId = map[signature];
-                            if (!this.idMap[signature] && shortId) {
-                                this.idMap[signature] = shortId;
-                                this.reverseMap[shortId] = signature;
+                        for (let fingerprint in map) {
+                            const shortId = map[fingerprint];
+                            if (!this.idMap[fingerprint] && shortId) {
+                                this.idMap[fingerprint] = shortId;
+                                this.reverseMap[shortId] = fingerprint;
                                 this.usedIds.add(shortId);
                             }
                         }
                     } catch (e) {}
                 }
 
-                saveToLocal(signature, shortId) {
+                saveToLocal(fingerprint, shortId) {
                     try {
                         let map = JSON.parse(localStorage.getItem('shortIdMap') || '{}');
-                        map[signature] = shortId;
+                        map[fingerprint] = shortId;
                         localStorage.setItem('shortIdMap', JSON.stringify(map));
                     } catch (e) {}
                 }
 
-                // 基于签名生成稳定ID
-                getOrCreateShortId(deviceSignature, profiles) {
+                async getOrCreateShortId(fingerprint, profiles) {
                     this.loadFromProfiles(profiles);
                     this.loadFromLocal();
 
-                    if (this.idMap[deviceSignature]) {
-                        return this.idMap[deviceSignature];
+                    if (this.idMap[fingerprint]) {
+                        return this.idMap[fingerprint];
                     }
 
-                    // 从签名生成候选ID (确定性)
-                    let hash = 0;
-                    for (let i = 0; i < deviceSignature.length; i++) {
-                        const char = deviceSignature.charCodeAt(i);
-                        hash = ((hash << 5) - hash) + char;
-                        hash |= 0;
-                    }
-                    let candidate = (Math.abs(hash) % 90000) + 10000; // 10000-99999
+                    // 生成稳定的候选ID (使用硬件特征)
+                    const candidate = await generateStableDeviceId();
 
-                    // 冲突探测
-                    while (this.reverseMap[candidate] && this.reverseMap[candidate] !== deviceSignature) {
-                        candidate++;
-                        if (candidate > 99999) candidate = 10000;
+                    // 冲突检测 (理论上概率极低，但保留)
+                    let finalId = candidate;
+                    while (this.reverseMap[finalId] && this.reverseMap[finalId] !== fingerprint) {
+                        finalId++;
+                        if (finalId > 99999) finalId = 10000;
                     }
 
-                    this.idMap[deviceSignature] = candidate;
-                    this.reverseMap[candidate] = deviceSignature;
-                    this.usedIds.add(candidate);
-                    this.saveToLocal(deviceSignature, candidate);
-                    return candidate;
+                    this.idMap[fingerprint] = finalId;
+                    this.reverseMap[finalId] = fingerprint;
+                    this.usedIds.add(finalId);
+                    this.saveToLocal(fingerprint, finalId);
+                    return finalId;
                 }
 
                 getLongIdByShort(shortId) {
@@ -754,7 +794,7 @@
                 wallPosts: [],
                 profiles: {},
                 announcement: '',
-                mySignature: null,          // 设备签名 (代替指纹)
+                myFingerprint: null,          // 设备特征字符串
                 myShortId: null,
                 myDeviceInfo: { model: '', os: '', browser: '' },
                 viewingProfileShortId: null,
@@ -813,9 +853,9 @@
             }
 
             const funMessages = [
-                "今天食堂有红烧肉！", "操场边的桂花开了～", "晚自习停电？不可能的",
-                "你猜我是不是机器人？", "高三14班黑板报拿了第一！", "校猫又在教学楼睡觉了",
-                "明天降温，记得加衣服", "校园墙新帖：求借物理笔记", "神奇换色按钮可以玩一天"
+                "是不是猫猫？", "话说会有人看这些吗喵", "哭哭喵，笨笨喵",
+                "(*･ω･)要不要加一点自定义功能？", "44班高颜值女生好多", "校猫又在教学楼睡觉了",
+                "明天降温，记得加衣服", "发点什么嘛(*^￢^*)", "求推广喵(>^ω^<)"
             ];
             function updateFunContent() {
                 funContent.textContent = funMessages[Math.floor(Math.random() * funMessages.length)];
@@ -835,24 +875,38 @@
             sidebarThemeToggle.addEventListener('click', toggleTheme);
             sidebarThemeIcon.className = document.body.classList.contains('dark') ? 'fas fa-sun' : 'fas fa-moon';
 
-            // 神奇换色 - 协调色板
+            // ========== 神奇换色 - 生成协调色板并应用到卡片背景 ==========
             function generateHarmoniousPalette() {
                 const hue = Math.floor(Math.random() * 360);
+                // 生成柔和卡片背景色 (与主色相协调) - 饱和度低，亮度高，形成淡色
+                const cardHue = (hue + 30) % 360; // 略微偏移，避免过于单调
+                const cardBg = `hsl(${cardHue}, 15%, 95%)`; // 亮色模式卡片背景：低饱和高亮
+                // 暗色模式背景由body.dark覆盖，但为了平滑切换，我们仍然定义
+                // 输入框背景略微深一点
+                const inputBg = `hsl(${cardHue}, 10%, 98%)`;
+                // 标签背景色
+                const tagBg = `hsl(${hue}, 15%, 92%)`;
+                
                 return {
                     '--accent': `hsl(${hue}, 70%, 45%)`,
                     '--accent-soft': `hsl(${hue}, 20%, 90%)`,
                     '--bg-start': `hsl(${hue}, 30%, 92%)`,
                     '--bg-end': `hsl(${(hue + 20) % 360}, 25%, 82%)`,
                     '--header-bg': `hsl(${hue}, 40%, 25%)`,
-                    '--delete-btn': `hsl(${(hue + 180) % 360}, 60%, 60%)`
+                    '--delete-btn': `hsl(${(hue + 180) % 360}, 60%, 60%)`,
+                    '--surface-solid': cardBg,
+                    '--input-bg': inputBg,
+                    '--tag-bg': tagBg,
                 };
             }
+
             function applyColorPalette(palette) {
                 const root = document.documentElement;
                 for (let [key, value] of Object.entries(palette)) {
                     root.style.setProperty(key, value);
                 }
             }
+
             function applyRandomTheme() {
                 const palette = generateHarmoniousPalette();
                 applyColorPalette(palette);
@@ -861,13 +915,11 @@
             }
             sidebarMagicBtn.addEventListener('click', applyRandomTheme);
 
-            // 我的主页按钮
             sidebarProfileBtn.addEventListener('click', () => {
                 setActiveView('profile');
                 closeSidebarFunc();
             });
 
-            // 公告栏更新 (保留，但无管理入口)
             function updateAnnouncementBar() {
                 if (appState.announcement) {
                     announcementText.textContent = appState.announcement;
@@ -875,38 +927,82 @@
                 } else announcementBar.style.display = 'none';
             }
 
-            // ========== iOS动态遮挡效果 ==========
+            // ========== 优化的卡片堆叠效果 (保持自然Z轴顺序，但通过固定z-index实现顶部覆盖) ==========
             let rafId = null;
-            function updateCardFocus() {
+            let lastUpdate = 0;
+            const UPDATE_INTERVAL = 16; // 约60fps
+
+            function updateCardStack() {
                 const cards = document.querySelectorAll('.feed-item');
                 if (!cards.length) return;
+                
                 const viewportCenter = window.innerHeight / 2 + window.scrollY;
                 const maxDistance = window.innerHeight * 0.7;
+                
+                // 先移除焦点类
                 cards.forEach(c => c.classList.remove('focused'));
-                let closest = null, closestDist = Infinity;
+                
+                // 找到最接近中心的卡片
+                let closest = null;
+                let closestDist = Infinity;
                 cards.forEach(c => {
                     const rect = c.getBoundingClientRect();
                     const center = rect.top + window.scrollY + rect.height/2;
                     const dist = Math.abs(center - viewportCenter);
                     if (dist < closestDist) { closestDist = dist; closest = c; }
                 });
+
+                // 批量更新卡片样式 - 只调整重叠程度和透明度，不改变z-index (z-index已在渲染时固定)
                 cards.forEach(c => {
                     const rect = c.getBoundingClientRect();
                     const center = rect.top + window.scrollY + rect.height/2;
                     const dist = Math.abs(center - viewportCenter);
-                    let weight = Math.max(0, 1 - (dist / maxDistance));
-                    weight = Math.min(1, weight);
-                    if (c === closest) { weight = 1; c.classList.add('focused'); }
-                    c.style.zIndex = Math.floor(20 + weight * 80);
-                    const overlap = 20 + 60 * (1 - weight);
+                    
+                    // 计算距离比例 (0-1)
+                    const ratio = Math.min(1, dist / maxDistance);
+                    
+                    // 标记焦点卡片 (用于视觉高亮，但不改变Z轴)
+                    if (c === closest) { 
+                        c.classList.add('focused');
+                    }
+                    
+                    // 只调整margin-bottom来控制重叠程度
+                    // 焦点卡片重叠20px，边缘卡片重叠80px
+                    const overlap = 20 + 60 * ratio;
                     c.style.marginBottom = `-${overlap}px`;
-                    c.style.opacity = 0.85 + weight * 0.15;
-                    c.style.filter = `blur(${(1-weight)*1.2}px)`;
-                    c.style.transform = `scale(${0.96 + weight*0.06})`;
+                    
+                    // 微调透明度增加景深感
+                    c.style.opacity = 0.85 + (1 - ratio) * 0.15;
+                    
+                    // 增强非聚焦卡片的模糊效果：最大模糊从1.2px提高到2.5px
+                    const blur = ratio * 2.5;
+                    c.style.filter = `blur(${blur}px)`;
+                    
+                    // 注意：没有设置transform和z-index，保持自然堆叠
                 });
             }
-            window.addEventListener('scroll', () => { if (rafId) cancelAnimationFrame(rafId); rafId = requestAnimationFrame(updateCardFocus); });
-            window.addEventListener('resize', updateCardFocus);
+
+            // 优化的滚动处理函数
+            function handleScroll() {
+                const now = performance.now();
+                if (!rafId && now - lastUpdate > UPDATE_INTERVAL) {
+                    rafId = requestAnimationFrame(() => {
+                        updateCardStack();
+                        lastUpdate = performance.now();
+                        rafId = null;
+                    });
+                }
+            }
+
+            // 使用 passive 提升滚动性能
+            window.addEventListener('scroll', handleScroll, { passive: true });
+            window.addEventListener('resize', () => {
+                if (rafId) cancelAnimationFrame(rafId);
+                rafId = requestAnimationFrame(() => {
+                    updateCardStack();
+                    rafId = null;
+                });
+            });
 
             // ========== 数据备份与恢复 ==========
             function backupToLocal(data) {
@@ -948,7 +1044,7 @@
                     if (data && Array.isArray(data.posts)) {
                         if (data.posts.length === 0 && localBackup && localBackup.posts.length > 0) {
                             if (confirm('云端数据为空，是否用本地备份恢复？点击取消将使用空数据。')) {
-                                return; // 保留本地数据
+                                return;
                             } else {
                                 appState.wallPosts = data.posts;
                                 appState.profiles = data.profiles || {};
@@ -991,16 +1087,19 @@
             // ========== 渲染校园墙 ==========
             function renderWallPosts() {
                 const filtered = appState.currentWallCategory === 'all' ? appState.wallPosts : appState.wallPosts.filter(p => p.category === appState.currentWallCategory);
+                // 按时间倒序排序，新帖在上 (已经通过unshift实现，但为了保险再排序一次)
                 const sorted = [...filtered].sort((a,b) => (b.time||'').localeCompare(a.time||''));
                 if (!sorted.length) {
                     wallFeed.innerHTML = '<div class="loading">✨ 还没有帖子，来发布第一条吧</div>';
                     return;
                 }
                 let html = '';
-                sorted.forEach(post => {
+                sorted.forEach((post, index) => {
                     const shortId = shortIdGen.idMap[post.fingerprint] || '?????';
+                    // 为每张卡片设置固定z-index，顶部卡片z-index最高 (100 - index)
+                    const zIndex = 100 - index;
                     html += `
-                        <div class="feed-item" data-post-id="${post.id}">
+                        <div class="feed-item" data-post-id="${post.id}" style="z-index: ${zIndex};">
                             <div class="item-header">
                                 <span class="badge-class" data-fp="${escapeHtml(post.fingerprint||'')}">${escapeHtml(post.class||'未填班级')}</span>
                                 <span class="badge-nick" data-fp="${escapeHtml(post.fingerprint||'')}">${escapeHtml(post.nickname||'匿名')}</span>
@@ -1029,7 +1128,7 @@
                 });
                 wallFeed.innerHTML = html;
                 attachWallEvents();
-                setTimeout(updateCardFocus, 50);
+                setTimeout(updateCardStack, 50);
             }
 
             function attachWallEvents() {
@@ -1051,7 +1150,7 @@
                 document.querySelectorAll('.add-comment-btn').forEach(btn => {
                     btn.addEventListener('click', async () => {
                         const id = btn.dataset.id;
-                        const nick = document.getElementById('nick-'+id).value.trim() || '匿名';
+                        const nick = document.getElementById('nick-'+id).value.trim() || '不知名猫猫^_^;';
                         const text = document.getElementById('text-'+id).value.trim();
                         if (!text) return;
                         const post = appState.wallPosts.find(p => p.id === id);
@@ -1087,10 +1186,10 @@
             }
 
             // ========== 个人主页渲染 ==========
-            function renderProfile(signature) {
-                const user = appState.profiles[signature];
-                if (!user) { profileContent.innerHTML = '<div class="loading">用户不存在</div>'; return; }
-                const isMine = (signature === appState.mySignature);
+            function renderProfile(fingerprint) {
+                const user = appState.profiles[fingerprint];
+                if (!user) { profileContent.innerHTML = '<div class="loading">没有该猫猫</-div>'; return; }
+                const isMine = (fingerprint === appState.myFingerprint);
                 let html = `
                     <div class="profile-card">
                         <div class="profile-field"><label>昵称</label><input type="text" id="profileNick" value="${escapeHtml(user.profile.nickname||'')}" ${isMine?'':'disabled'}></div>
@@ -1101,17 +1200,18 @@
                 if (isMine) {
                     html += `<div class="post-card"><h3>发布主页动态</h3><textarea id="profilePostContent" rows="2"></textarea><button class="save-btn" id="publishProfileBtn">发布</button></div>`;
                 }
-                const wallPosts = appState.wallPosts.filter(p => p.fingerprint === signature).map(p => ({...p, source:'wall'}));
+                const wallPosts = appState.wallPosts.filter(p => p.fingerprint === fingerprint).map(p => ({...p, source:'wall'}));
                 const profilePosts = (user.posts || []).map(p => ({...p, source:'profile'}));
                 const all = [...wallPosts, ...profilePosts].sort((a,b)=>(b.time||'').localeCompare(a.time||''));
                 html += `<div class="feed" id="profilePostsFeed">`;
                 if (!all.length) html += '<div class="loading">暂无内容</div>';
                 else {
-                    all.forEach(p => {
+                    all.forEach((p, idx) => {
+                        const zIndex = 100 - idx; // 保持顶部覆盖
                         if (p.source === 'wall') {
-                            html += `<div class="feed-item"><div class="item-header"><span>${escapeHtml(p.nickname)} <span class="source-tag">校园墙</span></span><span class="item-time">${escapeHtml(p.time)}</span></div><div class="item-content">${escapeHtml(p.content).replace(/\n/g,'<br>')}</div><div class="item-stats"><button class="stat-btn like-profile-btn" data-id="${p.id}" data-source="wall"><i class="fa-regular fa-heart"></i> ${p.likes||0}</button>${isMine?`<button class="delete-post" data-id="${p.id}" data-source="wall"><i class="fa-regular fa-trash-can"></i></button>`:''}</div></div>`;
+                            html += `<div class="feed-item" style="z-index: ${zIndex};"><div class="item-header"><span>${escapeHtml(p.nickname)} <span class="source-tag">校园墙</span></span><span class="item-time">${escapeHtml(p.time)}</span></div><div class="item-content">${escapeHtml(p.content).replace(/\n/g,'<br>')}</div><div class="item-stats"><button class="stat-btn like-profile-btn" data-id="${p.id}" data-source="wall"><i class="fa-regular fa-heart"></i> ${p.likes||0}</button>${isMine?`<button class="delete-post" data-id="${p.id}" data-source="wall"><i class="fa-regular fa-trash-can"></i></button>`:''}</div></div>`;
                         } else {
-                            html += `<div class="feed-item"><div class="item-header"><span>${escapeHtml(user.profile.nickname)} <span class="source-tag">主页</span></span><span class="item-time">${escapeHtml(p.time)}</span></div><div class="item-content">${escapeHtml(p.content).replace(/\n/g,'<br>')}</div><div class="item-stats"><button class="stat-btn like-profile-btn" data-id="${p.id}" data-source="profile"><i class="fa-regular fa-heart"></i> ${p.likes||0}</button>${isMine?`<button class="delete-post" data-id="${p.id}" data-source="profile"><i class="fa-regular fa-trash-can"></i></button>`:''}</div></div>`;
+                            html += `<div class="feed-item" style="z-index: ${zIndex};"><div class="item-header"><span>${escapeHtml(user.profile.nickname)} <span class="source-tag">主页</span></span><span class="item-time">${escapeHtml(p.time)}</span></div><div class="item-content">${escapeHtml(p.content).replace(/\n/g,'<br>')}</div><div class="item-stats"><button class="stat-btn like-profile-btn" data-id="${p.id}" data-source="profile"><i class="fa-regular fa-heart"></i> ${p.likes||0}</button>${isMine?`<button class="delete-post" data-id="${p.id}" data-source="profile"><i class="fa-regular fa-trash-can"></i></button>`:''}</div></div>`;
                         }
                     });
                 }
@@ -1121,19 +1221,19 @@
                     document.getElementById('saveProfileBtn')?.addEventListener('click', async () => {
                         const nick = document.getElementById('profileNick').value.trim() || '匿名';
                         const bio = document.getElementById('profileBio').value.trim() || '';
-                        appState.profiles[signature].profile.nickname = nick;
-                        appState.profiles[signature].profile.bio = bio;
+                        appState.profiles[fingerprint].profile.nickname = nick;
+                        appState.profiles[fingerprint].profile.bio = bio;
                         await saveData();
-                        renderProfile(signature);
+                        renderProfile(fingerprint);
                         sidebarNickname.textContent = nick;
                     });
                     document.getElementById('publishProfileBtn')?.addEventListener('click', async () => {
                         const content = document.getElementById('profilePostContent').value.trim();
                         if (!content) return;
                         const newPost = { id: Date.now()+'-'+Math.random().toString(36).substr(2,6), content, time: new Date().toLocaleString(), likes:0 };
-                        appState.profiles[signature].posts.unshift(newPost);
+                        appState.profiles[fingerprint].posts.unshift(newPost);
                         await saveData();
-                        renderProfile(signature);
+                        renderProfile(fingerprint);
                     });
                 }
                 document.querySelectorAll('.like-profile-btn').forEach(btn => {
@@ -1142,10 +1242,10 @@
                         const id = btn.dataset.id, src = btn.dataset.source;
                         if (src === 'wall') {
                             const post = appState.wallPosts.find(p => p.id === id);
-                            if (post) { post.likes = (post.likes||0)+1; await saveData(); renderProfile(signature); renderWallPosts(); }
+                            if (post) { post.likes = (post.likes||0)+1; await saveData(); renderProfile(fingerprint); renderWallPosts(); }
                         } else {
-                            const post = appState.profiles[signature].posts.find(p => p.id === id);
-                            if (post) { post.likes = (post.likes||0)+1; await saveData(); renderProfile(signature); }
+                            const post = appState.profiles[fingerprint].posts.find(p => p.id === id);
+                            if (post) { post.likes = (post.likes||0)+1; await saveData(); renderProfile(fingerprint); }
                         }
                     });
                 });
@@ -1172,7 +1272,7 @@
                 if (!content) return alert('内容不能为空');
                 const newPost = {
                     id: Date.now() + '-' + Math.random().toString(36).substr(2,6),
-                    fingerprint: appState.mySignature, // 使用设备签名作为指纹
+                    fingerprint: appState.myFingerprint,
                     class: className,
                     nickname: nick,
                     category: category,
@@ -1181,11 +1281,12 @@
                     likes: 0,
                     comments: []
                 };
+                // 新帖插入到最前面
                 appState.wallPosts.unshift(newPost);
                 await saveData();
                 postContent.value = ''; charCount.textContent = '0/500'; postClass.value = ''; postNick.value = '';
                 renderWallPosts();
-                if (profileView.classList.contains('active') && appState.viewingProfileShortId === appState.myShortId) renderProfile(appState.mySignature);
+                if (profileView.classList.contains('active') && appState.viewingProfileShortId === appState.myShortId) renderProfile(appState.myFingerprint);
             }
 
             function escapeHtml(unsafe) {
@@ -1201,7 +1302,7 @@
 
             // ========== 初始化 ==========
             (async function init() {
-                // 生成设备签名 (基于分辨率+型号)
+                // 解析设备信息
                 const parser = new UAParser();
                 const ua = parser.getResult();
                 appState.myDeviceInfo = {
@@ -1211,32 +1312,39 @@
                 };
                 profileDeviceModel.textContent = `${appState.myDeviceInfo.model} · ${appState.myDeviceInfo.os}`;
 
-                // 生成签名
-                const width = window.screen.width;
-                const height = window.screen.height;
-                const model = appState.myDeviceInfo.model;
-                const signatureRaw = `${width}x${height}-${model}`;
-                appState.mySignature = signatureRaw;
+                // 生成稳定的设备特征字符串 (用于映射)
+                const features = [
+                    navigator.hardwareConcurrency || 'unknown',
+                    navigator.deviceMemory || 'unknown',
+                    screen.colorDepth || 'unknown',
+                    screen.width,
+                    screen.height,
+                    navigator.language || 'unknown',
+                    ua.os.name || 'unknown',
+                    ua.device.model || ua.os.name || 'unknown',
+                    navigator.platform || 'unknown'
+                ].join('|');
+                appState.myFingerprint = features;
 
                 // 加载数据
                 await loadData();
 
-                // 获取或创建5位ID
-                appState.myShortId = shortIdGen.getOrCreateShortId(appState.mySignature, appState.profiles);
-                if (!appState.profiles[appState.mySignature]) {
-                    appState.profiles[appState.mySignature] = {
+                // 获取或创建5位ID (使用硬件特征)
+                appState.myShortId = await shortIdGen.getOrCreateShortId(appState.myFingerprint, appState.profiles);
+                if (!appState.profiles[appState.myFingerprint]) {
+                    appState.profiles[appState.myFingerprint] = {
                         shortId: appState.myShortId,
                         profile: { nickname: `同学${appState.myShortId}`, bio: '' },
                         posts: []
                     };
                 } else {
-                    appState.profiles[appState.mySignature].shortId = appState.myShortId;
+                    appState.profiles[appState.myFingerprint].shortId = appState.myShortId;
                 }
                 await saveData();
 
                 profileShortIdSpan.textContent = `5位ID: ${appState.myShortId}`;
                 sidebarShortIdSpan.textContent = `ID: ${appState.myShortId}`;
-                sidebarNickname.textContent = appState.profiles[appState.mySignature].profile.nickname;
+                sidebarNickname.textContent = appState.profiles[appState.myFingerprint].profile.nickname;
                 appState.viewingProfileShortId = appState.myShortId;
 
                 updateHitokoto();
@@ -1260,10 +1368,10 @@
                     const short = lookupShortId.value.trim();
                     if (!short || !/^\d{5}$/.test(short)) { alert('请输入5位数字ID'); return; }
                     await loadData();
-                    const signature = shortIdGen.getLongIdByShort(parseInt(short));
-                    if (!signature || !appState.profiles[signature]) { alert('该ID不存在'); return; }
+                    const fingerprint = shortIdGen.getLongIdByShort(parseInt(short));
+                    if (!fingerprint || !appState.profiles[fingerprint]) { alert('该ID不存在'); return; }
                     appState.viewingProfileShortId = short;
-                    renderProfile(signature);
+                    renderProfile(fingerprint);
                     setActiveView('profile');
                 });
 
@@ -1276,11 +1384,11 @@
                         await saveData();
                         renderWallPosts();
                     } else if (t.source === 'profile') {
-                        const user = appState.profiles[appState.mySignature];
+                        const user = appState.profiles[appState.myFingerprint];
                         if (user) {
                             user.posts = user.posts.filter(p => p.id !== t.postId);
                             await saveData();
-                            renderProfile(appState.mySignature);
+                            renderProfile(appState.myFingerprint);
                         }
                     }
                     deleteDialog.classList.remove('show');
